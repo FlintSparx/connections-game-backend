@@ -1,21 +1,56 @@
 import mongoose from "mongoose";
-import Category from "./Categories.js";
 
 const Game = new mongoose.Schema({
   category1: {
-    type: Category.schema,
+    type: {
+      name: {
+        type: String,
+        required: true,
+      },
+      word: {
+        type: [String],
+        required: true,
+      },
+    },
     required: true,
   },
   category2: {
-    type: Category.schema,
+    type: {
+      name: {
+        type: String,
+        required: true,
+      },
+      word: {
+        type: [String],
+        required: true,
+      },
+    },
     required: true,
   },
   category3: {
-    type: Category.schema,
+    type: {
+      name: {
+        type: String,
+        required: true,
+      },
+      word: {
+        type: [String],
+        required: true,
+      },
+    },
     required: true,
   },
   category4: {
-    type: Category.schema,
+    type: {
+      name: {
+        type: String,
+        required: true,
+      },
+      word: {
+        type: [String],
+        required: true,
+      },
+    },
     required: true,
   },
 });
