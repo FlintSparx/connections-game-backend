@@ -21,6 +21,28 @@ const User = new mongoose.Schema({
     type: String,
     required: true,
   },
+  first_name: {
+    type: String,
+    unique: false,
+    required: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+
+  },
+  last_name: {
+    type: String,
+    required: true,
+    unique: false,
+    trim: true,
+    minLenght: 3,
+    maxlength: 20,
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+    required: false,
+  }
   // profilePic: {
   //   // optional profile picture url
   //   type: String,
