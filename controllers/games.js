@@ -1,6 +1,7 @@
 import express from "express";
 import Game from "../models/Games.js";
 
+// router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
 
 router.post("/", async (req, res) => {
