@@ -35,7 +35,7 @@ const User = new mongoose.Schema({
     required: true,
     unique: false,
     trim: true,
-    minLenght: 3,
+    minlength: 3,
     maxlength: 20,
   },
   isAdmin: {
