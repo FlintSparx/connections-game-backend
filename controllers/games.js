@@ -6,18 +6,24 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { category1, category2, category3, category4 } = req.body;
-    // validate that all categories have words and names
+    const { name, category1, category2, category3, category4 } = req.body;
+
+    // Validate the name field
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({ message: "Game board name is required" });
+    }
+
+    // Validate that all categories have words and names
     if (![category1, category2, category3, category4].every(cat => Array.isArray(cat.word) && cat.name)) {
-      return res.status(400).json({ message: 'Invalid game format' });
+      return res.status(400).json({ message: "Invalid game format" });
     }
-    
-    // validate that each category has exactly 4 words
+
+    // Validate that each category has exactly 4 words
     if (![category1, category2, category3, category4].every(cat => cat.word.length === 4)) {
-      return res.status(400).json({ message: 'Each category must have exactly 4 words' });
+      return res.status(400).json({ message: "Each category must have exactly 4 words" });
     }
-    
-    const newGame = new Game({ category1, category2, category3, category4 });
+
+    const newGame = new Game({ name, category1, category2, category3, category4 });
     await newGame.save();
     res.status(201).json(newGame);
   } catch (error) {
