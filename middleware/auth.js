@@ -7,47 +7,61 @@ import User from "../models/User.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-    const { username, email, password, first_name, last_name } = req.body;
-    const newUser = new User({
-        username, 
-        email,
-        password: await bcryptjs.hashSync(password, process.env.SALT),
-        first_name,
-        last_name,
-        isAdmin: false,
-    });
-    console.log(newUser);
-    await newUser.save();
-    res.json({ message: `User ${username} created successfully `});
+  const { username, email, password, first_name, last_name } = req.body;
+  const newUser = new User({
+    username,
+    email,
+    password: await bcryptjs.hashSync(password, process.env.SALT),
+    first_name,
+    last_name,
+    isAdmin: false,
+  });
+  console.log(newUser);
+  await newUser.save();
+  res.json({ message: `User ${username} created successfully ` });
 });
 
 //Login
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
+  try {
     // Find a user based on their email address
     const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
     const verified = await bcryptjs.compare(password, user.password);
     if (!verified) {
-        res.send("incorrect password!");
-    } else {
-        const token = jwt.sign(
-            {
-                id: user._id,
-
-                isAdmin: user.isAdmin,
-            },
-            process.env.JWT_KEY,
-            {
-                expiresIn: 60 * 60 * 24,
-            }
-        );
-
-        res.send({
-            message: "user logged in successfully",
-            token,
-        });
+      return res.status(401).json({ message: "Incorrect password!" });
     }
+
+    if (!process.env.JWT_KEY) {
+      return res
+        .status(500)
+        .json({ message: "JWT_KEY not set in environment" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        isAdmin: user.isAdmin,
+      },
+      process.env.JWT_KEY,
+      {
+        expiresIn: 60 * 60 * 24,
+      }
+    );
+
+    res.json({
+      message: "User logged in successfully",
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 export default router;
