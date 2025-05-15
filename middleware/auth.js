@@ -1,17 +1,17 @@
 import express from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/user.js";
+import User from "../models/User.js";
 
 // Register route
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
+router.post("/", async (req, res) => {
     const { username, email, password, first_name, last_name } = req.body;
     const newUser = new User({
-        usernmae, 
+        username, 
         email,
-        password: await bcryptjs.hashsync(password, process.env.SALT),
+        password: await bcryptjs.hashSync(password, process.env.SALT),
         first_name,
         last_name,
         isAdmin: false,
