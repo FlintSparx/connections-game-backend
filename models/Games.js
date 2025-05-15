@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const Game = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
   category1: {
     type: {
       name: {
@@ -52,7 +56,7 @@ const Game = new mongoose.Schema({
       },
     },
     required: true,
-  },
+  }
 });
 
 export default mongoose.model("Game", Game);
