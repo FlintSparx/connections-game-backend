@@ -8,20 +8,21 @@ router.post("/", async (req, res) => {
   try {
     const { name, category1, category2, category3, category4 } = req.body;
     console.log("Received data:", req.body);
+    console.log();
     // Validate the name field
     if (!name || typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ message: "Game board name is required" });
     }
 
-    // // Validate that all categories have words and names
-    // if (
-    //   ![category1, category2, category3, category4].every((categories) => {
-    //     console.log(categories);
-    //     Array.isArray(categories.words) && categories.name;
-    //   })
-    // ) {
-    //   return res.status(400).json({ message: "Invalid game format" });
-    // }
+    // Validate that all categories have words and names
+    if (
+      ![category1, category2, category3, category4].every((categories) => {
+        console.log(categories);
+        Array.isArray(categories.words) && categories.name;
+      })
+    ) {
+      return res.status(400).json({ message: "Invalid game format" });
+    }
 
     // Validate that each category has exactly 4 words
     if (
