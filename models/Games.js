@@ -11,7 +11,7 @@ const Game = new mongoose.Schema({
         type: String,
         required: true,
       },
-      word: {
+      words: {
         type: [String],
         required: true,
       },
@@ -24,7 +24,7 @@ const Game = new mongoose.Schema({
         type: String,
         required: true,
       },
-      word: {
+      words: {
         type: [String],
         required: true,
       },
@@ -37,7 +37,7 @@ const Game = new mongoose.Schema({
         type: String,
         required: true,
       },
-      word: {
+      words: {
         type: [String],
         required: true,
       },
@@ -50,13 +50,13 @@ const Game = new mongoose.Schema({
         type: String,
         required: true,
       },
-      word: {
+      words: {
         type: [String],
         required: true,
       },
     },
     required: true,
-  }
+  },
 });
 
 export default mongoose.model("Game", Game);
