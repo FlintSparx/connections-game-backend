@@ -17,8 +17,7 @@ router.post("/", async (req, res) => {
     // Validate that all categories have words and names
     if (
       ![category1, category2, category3, category4].every((categories) => {
-        console.log(categories);
-        Array.isArray(categories.words) && categories.name;
+        return Array.isArray(categories.words) && categories.name;
       })
     ) {
       return res.status(400).json({ message: "Invalid game format" });
