@@ -7,23 +7,40 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   try {
     const { name, category1, category2, category3, category4 } = req.body;
-
+    console.log("Received data:", req.body);
+    console.log();
     // Validate the name field
     if (!name || typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ message: "Game board name is required" });
     }
 
     // Validate that all categories have words and names
-    if (![category1, category2, category3, category4].every(cat => Array.isArray(cat.word) && cat.name)) {
+    if (
+      ![category1, category2, category3, category4].every((categories) => {
+        return Array.isArray(categories.words) && categories.name;
+      })
+    ) {
       return res.status(400).json({ message: "Invalid game format" });
     }
 
     // Validate that each category has exactly 4 words
-    if (![category1, category2, category3, category4].every(cat => cat.word.length === 4)) {
-      return res.status(400).json({ message: "Each category must have exactly 4 words" });
+    if (
+      ![category1, category2, category3, category4].every(
+        (cat) => cat.words.length === 4
+      )
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Each category must have exactly 4 words" });
     }
 
-    const newGame = new Game({ name, category1, category2, category3, category4 });
+    const newGame = new Game({
+      name,
+      category1,
+      category2,
+      category3,
+      category4,
+    });
     await newGame.save();
     res.status(201).json(newGame);
   } catch (error) {
@@ -58,11 +75,11 @@ router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const deletedGame = await Game.findByIdAndDelete(id);
-    
+
     if (!deletedGame) {
       return res.status(404).json({ message: "Game not found" });
     }
-    
+
     res.status(200).json({ message: "Game deleted successfully" });
   } catch (error) {
     console.error("Error deleting game:", error);
