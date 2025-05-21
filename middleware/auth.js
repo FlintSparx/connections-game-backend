@@ -1,67 +1,35 @@
-import express from "express";
-import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 
-// Register route
-const router = express.Router();
-
-router.post("/", async (req, res) => {
-  const { username, email, password, first_name, last_name } = req.body;
-  const newUser = new User({
-    username,
-    email,
-    password: await bcryptjs.hashSync(password, process.env.SALT),
-    first_name,
-    last_name,
-    isAdmin: false,
-  });
-  console.log(newUser);
-  await newUser.save();
-  res.json({ message: `User ${username} created successfully ` });
-});
-
-//Login
-router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-
+const tokenChecker = (req, res, next) => {
   try {
-    // Find a user based on their username address
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    let token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).send("Access denied. No token provided.");
+    } else {
+      //if the token includes Bearer, split to array and grab index 1
+      if (token.includes("Bearer")) token = token.split(" ")[1];
 
-    const verified = await bcryptjs.compare(password, user.password);
-    if (!verified) {
-      return res.status(401).json({ message: "Incorrect password!" });
-    }
+      //verify the token
+      const tokenMatch = jwt.verify(token, process.env.JWT_KEY);
 
-    if (!process.env.JWT_KEY) {
-      return res
-        .status(500)
-        .json({ message: "JWT_KEY not set in environment" });
-    }
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        isAdmin: user.isAdmin,
-      },
-      process.env.JWT_KEY,
-      {
-        expiresIn: 60 * 60 * 24,
+      if (!tokenMatch) {
+        return res.status(401).send("Access denied. Invalid token.");
+      } else {
+        //add the info from the token to the request under user ex. req.user.userID to check chat room user access
+        req.user = tokenMatch;
+        next();
       }
-    );
-
-    res.json({
-      message: "User logged in successfully",
-      token,
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    }
+  } catch (err) {
+    console.error(err);
+    if (err.name === "TokenExpiredError") {
+      res.status(401).send("Access denied. Token has expired.");
+    } else if (err.name === "JsonWebTokenError") {
+      res.status(401).send("Access denied. Invalid token.");
+    } else {
+      res.status(500).send(`unknown error: ${err}`);
+    }
   }
-});
+};
 
-export default router;
+export default tokenChecker;
