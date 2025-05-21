@@ -16,7 +16,6 @@ router.post("/register", async (req, res) => {
     last_name,
     isAdmin: false,
   });
-  console.log(newUser);
   await newUser.save();
   res.json({ message: `User ${username} created successfully ` });
 });
