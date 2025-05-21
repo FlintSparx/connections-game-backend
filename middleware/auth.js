@@ -22,7 +22,13 @@ const tokenChecker = (req, res, next) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send(`unknown error: ${err}`);
+    if (err.name === "TokenExpiredError") {
+      res.status(401).send("Access denied. Token has expired.");
+    } else if (err.name === "JsonWebTokenError") {
+      res.status(401).send("Access denied. Invalid token.");
+    } else {
+      res.status(500).send(`unknown error: ${err}`);
+    }
   }
 };
 
