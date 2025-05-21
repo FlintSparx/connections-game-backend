@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/", tokenChecker, async (req, res) => {
   try {
     const { name, category1, category2, category3, category4 } = req.body;
+    const createdBy = req.user.id; // Add the user ID from the token
     // Validate the name field
     if (!name || typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ message: "Game board name is required" });
@@ -31,14 +32,13 @@ router.post("/", tokenChecker, async (req, res) => {
       return res
         .status(400)
         .json({ message: "Each category must have exactly 4 words" });
-    }
-
-    const newGame = new Game({
+    }    const newGame = new Game({
       name,
       category1,
       category2,
       category3,
       category4,
+      createdBy
     });
     await newGame.save();
     res.status(201).json(newGame);
@@ -50,7 +50,7 @@ router.post("/", tokenChecker, async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const games = await Game.find();
+    const games = await Game.find().populate('createdBy', 'username');
     res.status(200).json(games);
   } catch (error) {
     console.error("Error fetching games:", error);
