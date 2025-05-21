@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 const adminChecker = (req, res, next) => {
   try {
     let token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).send("Access denied. Missing authorization header.");
+    }
     if (token.includes("Bearer")) token = token.split(" ")[1];
     const tokenMatch = jwt.verify(token, process.env.JWT_KEY);
     const isAdmin = tokenMatch.isAdmin;
