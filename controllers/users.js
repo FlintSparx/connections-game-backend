@@ -64,4 +64,70 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Get user profile
+router.get("/profile/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user profile" });
+  }
+});
+
+// Update user profile
+router.put("/profile/:id", async (req, res) => {
+  try {
+    const { username, email, first_name, last_name, currentPassword, newPassword } = req.body;
+    
+    // Find user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify current password
+    const verified = await bcryptjs.compare(currentPassword, user.password);
+    if (!verified) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Update user fields
+    user.username = username;
+    user.email = email;
+    user.first_name = first_name;
+    user.last_name = last_name;
+
+    // Update password if new one is provided
+    if (newPassword) {
+      user.password = await bcryptjs.hash(newPassword, process.env.SALT);
+    }
+
+    await user.save();
+
+    // Generate new token with updated info
+    const token = jwt.sign(
+      {
+        id: user._id,
+        username: user.username,
+        isAdmin: user.isAdmin,
+      },
+      process.env.JWT_KEY,
+      {
+        expiresIn: 60 * 60 * 24,
+      }
+    );
+
+    res.json({ 
+      message: "Profile updated successfully",
+      token 
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+});
+
 export default router;
