@@ -97,8 +97,9 @@ router.put("/profile/:id", async (req, res) => {
     user.username = username;
     user.email = email;
     user.first_name = first_name;
-    user.last_name = last_name;    // Update password if new one is provided
-    if (newPassword) {
+    user.last_name = last_name;
+      // Hash and update password if provided
+    if (newPassword && newPassword.trim() !== '') {
       user.password = await bcryptjs.hash(newPassword, parseInt(process.env.SALT));
     }
 
@@ -120,8 +121,7 @@ router.put("/profile/:id", async (req, res) => {
     res.json({ 
       message: "Profile updated successfully",
       token 
-    });
-  } catch (error) {
+    });  } catch (error) {
     console.error("Error updating profile:", error);
     res.status(500).json({ message: "Error updating profile" });
   }
