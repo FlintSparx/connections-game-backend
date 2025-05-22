@@ -1,6 +1,7 @@
 import express from "express";
 import Game from "../models/Games.js";
 import tokenChecker from "../middleware/auth.js";
+import swearify from "swearify";
 
 // router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
@@ -32,7 +33,26 @@ router.post("/", tokenChecker, async (req, res) => {
       return res
         .status(400)
         .json({ message: "Each category must have exactly 4 words" });
-    }    const newGame = new Game({
+    }
+
+    // Use swearify to check for profanity
+    const allContent = [
+      name,
+      category1.name, category2, name, category3.name, category4.name,
+      ...category1.words, ...category2.words, ...category3.words, ...category4.words
+    ];
+
+    for (const text of allContent) {
+      const result = swearify.findAndFilter(text, '*', ['en'], [], []);
+
+      if (result.bad_words && result.bad_words.length > 0) {
+        return res.status(400).json({
+          message: "Content contains inappropriate language and cannot be saved"
+        });
+      }
+    }
+
+    const newGame = new Game({
       name,
       category1,
       category2,
