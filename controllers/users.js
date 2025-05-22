@@ -130,4 +130,31 @@ router.put("/profile/:id", async (req, res) => {
   }
 });
 
+// Delete user account
+router.delete("/profile/:id", async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    // Find user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify password
+    const verified = await bcryptjs.compare(password, user.password);
+    if (!verified) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(req.params.id);
+    
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ message: "Error deleting account" });
+  }
+});
+
 export default router;
