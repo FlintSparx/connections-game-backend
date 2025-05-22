@@ -10,7 +10,7 @@ router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name } = req.body;
   const newUser = new User({
     username,
-    email,
+    email: email.toLowerCase(),
     password: await bcryptjs.hash(password, process.env.SALT),
     first_name,
     last_name,
@@ -22,11 +22,11 @@ router.post("/register", async (req, res) => {
 
 //Login
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     // Find a user based on their username address
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
