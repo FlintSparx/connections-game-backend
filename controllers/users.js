@@ -2,20 +2,16 @@ import express from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import env from "dotenv";
 
 // Register route
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name } = req.body;
-  const saltRounds = process.env.SALT ? parseInt(process.env.SALT, 10) : 10; // Ensure number
-  const hashedPassword = await bcryptjs.hash(password, saltRounds);
-
   const newUser = new User({
     username,
     email: email.toLowerCase(),
-    password: hashedPassword,
+    password: await bcryptjs.hash(password, process.env.SALT),
     first_name,
     last_name,
     isAdmin: false,
@@ -102,10 +98,11 @@ router.put("/profile/:id", async (req, res) => {
     user.username = username;
     user.email = email;
     user.first_name = first_name;
-    user.last_name = last_name;      // Hash and update password if provided
-    if (newPassword && newPassword.trim() !== '') {
-      const saltRounds = process.env.SALT ? parseInt(process.env.SALT, 10) : 10; // Ensure number
-      user.password = await bcryptjs.hash(newPassword, saltRounds);
+    user.last_name = last_name;
+
+    // Update password if new one is provided
+    if (newPassword) {
+      user.password = await bcryptjs.hash(newPassword, process.env.SALT);
     }
 
     await user.save();
@@ -126,7 +123,8 @@ router.put("/profile/:id", async (req, res) => {
     res.json({ 
       message: "Profile updated successfully",
       token 
-    });  } catch (error) {
+    });
+  } catch (error) {
     console.error("Error updating profile:", error);
     res.status(500).json({ message: "Error updating profile" });
   }
