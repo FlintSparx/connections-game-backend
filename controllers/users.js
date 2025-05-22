@@ -7,11 +7,10 @@ import User from "../models/User.js";
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name } = req.body;
-  const newUser = new User({
+  const { username, email, password, first_name, last_name } = req.body;  const newUser = new User({
     username,
     email: email.toLowerCase(),
-    password: await bcryptjs.hash(password, process.env.SALT),
+    password: await bcryptjs.hash(password, parseInt(process.env.SALT)),
     first_name,
     last_name,
     isAdmin: false,
@@ -101,8 +100,8 @@ router.put("/profile/:id", async (req, res) => {
     user.last_name = last_name;
 
     // Update password if new one is provided
-    if (newPassword) {
-      user.password = await bcryptjs.hash(newPassword, process.env.SALT);
+    if (newPassword && newPassword.trim() !== '') {
+      user.password = await bcryptjs.hash(newPassword, parseInt(process.env.SALT));
     }
 
     await user.save();
