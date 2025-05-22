@@ -7,8 +7,8 @@ const Game = new mongoose.Schema({
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   category1: {
     type: {
@@ -62,6 +62,29 @@ const Game = new mongoose.Schema({
     },
     required: true,
   },
+  plays: {
+    type: Number,
+    default: 0,
+  },
+  wins: {
+    type: Number,
+    default: 0,
+  },
 });
+
+Game.virtual("winPercentage").get(function () {
+  if (this.plays === 0) return 0;
+  return Math.round((this.wins / this.plays) * 10);
+});
+
+Game.virtual("difficulty").get(function () {
+  const winPct = this.winPercentage;
+  if (winPct >= 25) return "hard";
+  if (winPct >= 50) return "medium";
+  return "easy";
+});
+
+Game.set("toJSON", { virtuals: true });
+Game.set("toObject", { virtuals: true });
 
 export default mongoose.model("Game", Game);
