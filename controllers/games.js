@@ -59,6 +59,7 @@ router.post("/:id/play", async (req, res) => {
     if (!game) return res.status(404).json({ message: "Game not found" });
 
     game.plays += 1;
+    if (won) game.wins += 1;
     await game.save();
 
     res.json({

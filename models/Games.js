@@ -74,7 +74,7 @@ const Game = new mongoose.Schema({
 
 Game.virtual("winPercentage").get(function () {
   if (this.plays === 0) return 0;
-  return Math.round((this.wins / this.plays) * 10);
+  return Math.round((this.wins / this.plays) * 100);
 });
 
 Game.virtual("difficulty").get(function () {
