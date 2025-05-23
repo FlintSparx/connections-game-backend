@@ -38,17 +38,29 @@ router.post("/", tokenChecker, async (req, res) => {
     // Use swearify to check for profanity
     const allContent = [
       name,
-      category1.name, category2, name, category3.name, category4.name,
+      category1.name, category2.name, category3.name, category4.name,
       ...category1.words, ...category2.words, ...category3.words, ...category4.words
-    ];
+    ].filter(text => text && typeof text === 'string' && text.trim() !== '');
 
     for (const text of allContent) {
-      const result = swearify.findAndFilter(text, '*', ['en'], [], []);
-
-      if (result.bad_words && result.bad_words.length > 0) {
-        return res.status(400).json({
-          message: "Content contains inappropriate language and cannot be saved"
-        });
+      try {
+        const result = swearify.findAndFilter(
+          text,           // sentence to filter
+          '*',            // placeholder character
+          ['en'],         // languages to check (English)
+          [],             // allowed swears (empty = none allowed)
+          []              // custom words to add (empty)
+        );
+        
+        // Check if profanity was found
+        if (result && result.found === true && result.bad_words && result.bad_words.length > 0) {
+          return res.status(400).json({ 
+            message: "Content contains inappropriate language and cannot be saved" 
+          });
+        }
+      } catch (error) {
+        console.error('Swearify error for text:', text, error);
+        continue;
       }
     }
 
