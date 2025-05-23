@@ -6,6 +6,19 @@ import User from "../models/User.js";
 // Register route
 const router = express.Router();
 
+// Function that will check usernames for profanity
+function checkUsernameProfanity(username) {
+  try {
+    const result = swearify.findAndFilter(
+      username,
+      '*',
+      ['en'],
+      [],
+      []
+    );
+  }
+}
+
 router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name } = req.body;  const newUser = new User({
     username,
