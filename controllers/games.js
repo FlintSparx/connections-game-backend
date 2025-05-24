@@ -22,9 +22,8 @@ router.post("/", tokenChecker, async (req, res) => {
       })
     ) {
       return res.status(400).json({ message: "Invalid game format" });
-    }
-
-    // Validate that each category has exactly 4 words    if (
+    }    // Validate that each category has exactly 4 words
+    if (
       ![category1, category2, category3, category4].every(
         (cat) => cat.words.length === 4
       )
