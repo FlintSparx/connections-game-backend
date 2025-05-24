@@ -22,9 +22,8 @@ router.post("/", tokenChecker, async (req, res) => {
       })
     ) {
       return res.status(400).json({ message: "Invalid game format" });
-    }
-
-    // Validate that each category has exactly 4 words    if (
+    }    // Validate that each category has exactly 4 words
+    if (
       ![category1, category2, category3, category4].every(
         (cat) => cat.words.length === 4
       )
@@ -106,7 +105,10 @@ router.post("/:id/play", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
+    // Populate createdBy with just the username field
     const games = await Game.find().populate("createdBy", "username");
+
+    // the games array should already have proper difficulty values
     res.status(200).json(games);
   } catch (error) {
     console.error("Error fetching games:", error);
