@@ -105,7 +105,10 @@ router.post("/:id/play", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
+    // Populate createdBy with just the username field
     const games = await Game.find().populate("createdBy", "username");
+
+    // the games array should already have proper difficulty values
     res.status(200).json(games);
   } catch (error) {
     console.error("Error fetching games:", error);

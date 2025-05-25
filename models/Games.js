@@ -4,11 +4,10 @@ const Game = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-  },
-  createdBy: {
+  },  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: false,
   },
   category1: {
     type: {
@@ -78,9 +77,13 @@ Game.virtual("winPercentage").get(function () {
 });
 
 Game.virtual("difficulty").get(function () {
+  // Return 'unknown' if there are no plays yet
+  if (this.plays === 0) return "unknown";
+  
   const winPct = this.winPercentage;
-  if (winPct >= 25) return "hard";
-  if (winPct >= 50) return "medium";
+  // Games with lower win percentages are harder
+  if (winPct <= 25) return "hard";
+  if (winPct <= 50) return "medium";
   return "easy";
 });
 
