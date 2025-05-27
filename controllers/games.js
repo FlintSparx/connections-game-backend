@@ -6,6 +6,19 @@ import swearify from "swearify";
 // router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
 
+// Allowed curse words for NSFW game boards:
+const allowedProfanity = [
+  'fuck', 'shit', 'bitch', 'cock', 'dick', 'pussy', 'ass'
+];
+
+// Function to check if content contains any NSFW language
+const checkForNSFWContent = (textArray) => {
+  const joinedText = textArray.join(' ').toLowerCase();
+  return ALLOWED_PROFANITY.some(word => 
+    joinedText.includes(word.toLowerCase())
+  );
+}
+
 router.post("/", tokenChecker, async (req, res) => {
   try {
     const { name, category1, category2, category3, category4 } = req.body;
@@ -48,11 +61,11 @@ router.post("/", tokenChecker, async (req, res) => {
           text,           // sentence to filter
           '*',            // placeholder character
           ['en'],         // languages to check (English)
-          [],             // allowed swears (empty = none allowed)
+          ['fuck', 'shit', 'bitch', 'cock', 'dick', 'pussy', 'ass'],             // allowed swears (empty = none allowed)
           []              // custom words to add (empty)
         );
         
-        // Check if profanity was found
+        // Check if blocked profanity was found
         if (result && result.found === true && result.bad_words && result.bad_words.length > 0) {
           return res.status(400).json({ 
             message: "Content contains inappropriate language and cannot be saved" 
@@ -62,6 +75,13 @@ router.post("/", tokenChecker, async (req, res) => {
         console.error('Swearify error for text:', text, error);
         continue;
       }
+    }
+
+    // Check if content should be tagegd as NSFW
+    const isNSFW = checkForNSFWContent(allContent);
+    let tags = []
+    if (isNSFW) {
+      tags.push('NSFW');
     }
 
     const newGame = new Game({

@@ -10,6 +10,10 @@ const Game = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  tags: {
+    type: [String],
+    default: [],
+  },
   category1: {
     type: {
       name: {
