@@ -36,9 +36,7 @@ router.post("/", tokenChecker, async (req, res) => {
       })
     ) {
       return res.status(400).json({ message: "Invalid game format" });
-    }
-
-    // Validate that each category has exactly 4 words
+    }    // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
         (cat) => cat.words.length === 4
@@ -112,9 +110,38 @@ router.post("/", tokenChecker, async (req, res) => {
   }
 });
 
+// record a game win
+router.post("/:id/play", async (req, res) => {
+  const { id } = req.params;
+  const { won } = req.body;
+
+  try {
+    const game = await Game.findById(id);
+    if (!game) return res.status(404).json({ message: "Game not found" });
+
+    game.plays += 1;
+    if (won) game.wins += 1;
+    await game.save();
+
+    res.json({
+      message: "Game stats updated",
+      plays: game.plays,
+      wins: game.wins,
+      winPercentage: game.winPercentage,
+      difficulty: game.difficulty,
+    });
+  } catch (error) {
+    console.error("Error updating game stats:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
-    const games = await Game.find().populate('createdBy', 'username');
+    // Populate createdBy with just the username field
+    const games = await Game.find().populate("createdBy", "username");
+
+    // the games array should already have proper difficulty values
     res.status(200).json(games);
   } catch (error) {
     console.error("Error fetching games:", error);
@@ -125,7 +152,8 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const game = await Game.findById(id);
+    // Populate createdBy with the username field
+    const game = await Game.findById(id).populate("createdBy", "username");
     res.status(200).json(game);
   } catch (error) {
     console.error("Error fetching game:", error);
