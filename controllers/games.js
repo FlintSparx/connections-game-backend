@@ -119,7 +119,8 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const game = await Game.findById(id);
+    // Populate createdBy with the username field
+    const game = await Game.findById(id).populate("createdBy", "username");
     res.status(200).json(game);
   } catch (error) {
     console.error("Error fetching game:", error);
