@@ -28,7 +28,6 @@ const User = new mongoose.Schema({
     trim: true,
     minlength: 3,
     maxlength: 20,
-
   },
   last_name: {
     type: String,
@@ -42,7 +41,19 @@ const User = new mongoose.Schema({
     type: Boolean,
     default: false,
     required: false,
-  }
+  },
+  gamesSolved: [
+    {
+      gameId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+      },
+      completedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   // profilePic: {
   //   // optional profile picture url
   //   type: String,
@@ -53,22 +64,6 @@ const User = new mongoose.Schema({
   //     // reference to games user created
   //     type: mongoose.Schema.Types.ObjectId,
   //     ref: "Game"
-  //   }
-  // ],
-  // gamesSolved: [
-  //   {
-  //     gameId: {
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: "Game"
-  //     },
-  //     attempts: {
-  //       type: Number,
-  //       default: 1
-  //     },
-  //     completedAt: {
-  //       type: Date,
-  //       default: Date.now
-  //     }
   //   }
   // ],
   // favorites: [
