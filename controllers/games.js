@@ -91,7 +91,7 @@ router.post("/", tokenChecker, async (req, res) => {
 });
 
 // record a game win
-router.post("/:id/play", tokenChecker, async (req, res) => {
+router.post("/:id/play", async (req, res) => {
   const { id } = req.params;
   const { won } = req.body;
 
