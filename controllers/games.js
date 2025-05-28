@@ -95,6 +95,19 @@ router.post("/:id/play", async (req, res) => {
   const { id } = req.params;
   const { won } = req.body;
 
+  // Optionally decode JWT if present
+  let userId = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_KEY);
+      userId = decoded.id;
+    } catch (err) {
+      // Invalid token, ignore for guest play
+    }
+  }
+
   try {
     const game = await Game.findById(id);
     if (!game) return res.status(404).json({ message: "Game not found" });
@@ -103,18 +116,23 @@ router.post("/:id/play", async (req, res) => {
     if (won) game.wins += 1;
     await game.save();
 
-    // If user won, update their profile
-    if (won && req.user && req.user.id) {
-      const user = await User.findById(req.user.id);
+    // If user won and is authenticated, update their profile
+    if (won && userId) {
+      const user = await User.findById(userId);
       if (user) {
-        // Only add if not already solved
         const alreadySolved = user.gamesSolved.some(
           (g) => g.gameId.toString() === id
         );
         if (!alreadySolved) {
-          user.gamesSolved.push({ gameId: id });
+          user.gamesSolved.push({ gameId: id, completedAt: new Date() });
+          console.log("Saving user with new solved game...");
           await user.save();
+          console.log("User saved!");
+        } else {
+          console.log("Game already solved by user.");
         }
+      } else {
+        console.log("User not found for id:", userId);
       }
     }
 
