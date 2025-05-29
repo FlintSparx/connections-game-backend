@@ -8,7 +8,7 @@ import swearify from "swearify";
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name } = req.body;
+  const { username, email, password, first_name, last_name, dateOfBirth } = req.body;
 
   // Check username for profanity
 
@@ -28,6 +28,7 @@ router.post("/register", async (req, res) => {
     password: await bcryptjs.hash(password, parseInt(process.env.SALT)),
     first_name,
     last_name,
+    dateOfBirth,
     isAdmin: false,
   });
   await newUser.save();
@@ -61,6 +62,7 @@ router.post("/login", async (req, res) => {
         id: user._id,
         username: user.username,
         isAdmin: user.isAdmin,
+        dateOfBirth: user.dateOfBirth,
       },
       process.env.JWT_KEY,
       {
@@ -127,6 +129,7 @@ router.put("/profile/:id", async (req, res) => {
         id: user._id,
         username: user.username,
         isAdmin: user.isAdmin,
+        dateOfBirth: user.dateOfBirth,
       },
       process.env.JWT_KEY,
       {
