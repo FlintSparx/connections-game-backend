@@ -2,12 +2,14 @@ import express from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 
 // Register route
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name } = req.body;  const newUser = new User({
+  const { username, email, password, first_name, last_name } = req.body;
+  const newUser = new User({
     username,
     email: email.toLowerCase(),
     password: await bcryptjs.hash(password, parseInt(process.env.SALT)),
@@ -66,7 +68,7 @@ router.post("/login", async (req, res) => {
 // Get user profile
 router.get("/profile/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -79,8 +81,15 @@ router.get("/profile/:id", async (req, res) => {
 // Update user profile
 router.put("/profile/:id", async (req, res) => {
   try {
-    const { username, email, first_name, last_name, currentPassword, newPassword } = req.body;
-    
+    const {
+      username,
+      email,
+      first_name,
+      last_name,
+      currentPassword,
+      newPassword,
+    } = req.body;
+
     // Find user
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -100,8 +109,11 @@ router.put("/profile/:id", async (req, res) => {
     user.last_name = last_name;
 
     // Update password if new one is provided
-    if (newPassword && newPassword.trim() !== '') {
-      user.password = await bcryptjs.hash(newPassword, parseInt(process.env.SALT));
+    if (newPassword && newPassword.trim() !== "") {
+      user.password = await bcryptjs.hash(
+        newPassword,
+        parseInt(process.env.SALT)
+      );
     }
 
     await user.save();
@@ -119,9 +131,9 @@ router.put("/profile/:id", async (req, res) => {
       }
     );
 
-    res.json({ 
+    res.json({
       message: "Profile updated successfully",
-      token 
+      token,
     });
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -133,7 +145,7 @@ router.put("/profile/:id", async (req, res) => {
 router.delete("/profile/:id", async (req, res) => {
   try {
     const { password } = req.body;
-    
+
     // Find user
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -148,11 +160,34 @@ router.delete("/profile/:id", async (req, res) => {
 
     // Delete user
     await User.findByIdAndDelete(req.params.id);
-    
+
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Error deleting account:", error);
     res.status(500).json({ message: "Error deleting account" });
+  }
+});
+
+router.post("/:userId/:gameId", async (req, res) => {
+  const { userId, gameId } = req.params;
+  console.log("Adding game to user:", userId, gameId);
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.gamesSolved.some((game) => game._id.toString() === gameId)) {
+      return res.status(400).json({ message: "Game already added to user" });
+    }
+    user.gamesSolved.push({
+      _id: new mongoose.Types.ObjectId(gameId),
+      completedAt: new Date(),
+    });
+    await user.save();
+    res.json({ message: "Game added to user successfully" });
+  } catch (error) {
+    console.error("Error adding game to user:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
