@@ -15,7 +15,7 @@ import adminRouter from "./controllers/admin.js";
 import adminChecker from "./middleware/adminChecker.js";
 
 // Middleware
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: "http://upright-connections.click", credentials: true }));
 app.use(express.json());
 app.use("/games", gamesRouter);
 app.use("/users", userRouter);
