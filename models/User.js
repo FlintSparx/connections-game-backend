@@ -36,12 +36,23 @@ const User = new mongoose.Schema({
     trim: true,
     minlength: 3,
     maxlength: 20,
-  },
-  isAdmin: {
+  },  isAdmin: {
     type: Boolean,
     default: false,
     required: false,
   },
+  gamesSolved: [
+    {
+      gameId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+      },
+      completedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   dateOfBirth: {
     type: Date,
     required: true,
@@ -53,7 +64,7 @@ const User = new mongoose.Schema({
       message: 'Date of birth cannot be in the future'
     }
   }
-}); // ← Schema definition ends here
+}); // Schema definition ends here
 
 // Add virtual fields AFTER the schema definition
 User.virtual('age').get(function() {
@@ -80,8 +91,6 @@ User.virtual('isAdult').get(function() {
 // Ensure virtual fields are included when converting to JSON
 User.set('toJSON', { virtuals: true });
 User.set('toObject', { virtuals: true });
-
-
   // profilePic: {
   //   // optional profile picture url
   //   type: String,
@@ -92,22 +101,6 @@ User.set('toObject', { virtuals: true });
   //     // reference to games user created
   //     type: mongoose.Schema.Types.ObjectId,
   //     ref: "Game"
-  //   }
-  // ],
-  // gamesSolved: [
-  //   {
-  //     gameId: {
-  //       type: mongoose.Schema.Types.ObjectId,
-  //       ref: "Game"
-  //     },
-  //     attempts: {
-  //       type: Number,
-  //       default: 1
-  //     },
-  //     completedAt: {
-  //       type: Date,
-  //       default: Date.now
-  //     }
   //   }
   // ],
   // favorites: [

@@ -2,6 +2,7 @@ import express from "express";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 import swearify from "swearify";
 
 // Register route
@@ -11,17 +12,15 @@ router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name, dateOfBirth } = req.body;
 
   // Check username for profanity
-
   try {
     const result = swearify.findAndFilter(username, '*', ['en'], [], []);
     if (result && result.found === true && result.bad_words && result.bad_words.length > 0) {
-      return res.status(400).json({ message: "Username conatains inappropriate language.  Please choose a different username." });
+      return res.status(400).json({ message: "Username contains inappropriate language. Please choose a different username." });
     }
   } catch (error) {
     console.error('Swearify error for username:', username, error);
-    // Continue with registration of swearify fails
+    // Continue with registration if swearify fails
   }
-
   const newUser = new User({
     username,
     email: email.toLowerCase(),
@@ -83,7 +82,7 @@ router.post("/login", async (req, res) => {
 // Get user profile
 router.get("/profile/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -117,8 +116,11 @@ router.put("/profile/:id", async (req, res) => {
     user.last_name = last_name;
 
     // Update password if new one is provided
-    if (newPassword && newPassword.trim() !== '') {
-      user.password = await bcryptjs.hash(newPassword, parseInt(process.env.SALT));
+    if (newPassword && newPassword.trim() !== "") {
+      user.password = await bcryptjs.hash(
+        newPassword,
+        parseInt(process.env.SALT)
+      );
     }
 
     await user.save();
@@ -135,11 +137,9 @@ router.put("/profile/:id", async (req, res) => {
       {
         expiresIn: 60 * 60 * 24,
       }
-    );
-
-    res.json({
+    );    res.json({
       message: "Profile updated successfully",
-      token
+      token,
     });
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -171,6 +171,29 @@ router.delete("/profile/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting account:", error);
     res.status(500).json({ message: "Error deleting account" });
+  }
+});
+
+router.post("/:userId/:gameId", async (req, res) => {
+  const { userId, gameId } = req.params;
+  console.log("Adding game to user:", userId, gameId);
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.gamesSolved.some((game) => game._id.toString() === gameId)) {
+      return res.status(400).json({ message: "Game already added to user" });
+    }
+    user.gamesSolved.push({
+      _id: new mongoose.Types.ObjectId(gameId),
+      completedAt: new Date(),
+    });
+    await user.save();
+    res.json({ message: "Game added to user successfully" });
+  } catch (error) {
+    console.error("Error adding game to user:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

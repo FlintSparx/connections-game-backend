@@ -2,6 +2,8 @@ import express from "express";
 import Game from "../models/Games.js";
 import tokenChecker from "../middleware/auth.js";
 import swearify from "swearify";
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 // router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
@@ -22,7 +24,7 @@ const allowedProfanity = [
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
   return allowedProfanity.some((word) =>
-    joinedText.includes(word.toLowerCase())
+    joinedText.includes(word.toLowerCase()),
   );
 };
 
@@ -46,7 +48,7 @@ router.post("/", tokenChecker, async (req, res) => {
     } // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4
+        (cat) => cat.words.length === 4,
       )
     ) {
       return res
@@ -75,9 +77,9 @@ router.post("/", tokenChecker, async (req, res) => {
           "*", // placeholder character
           ["en"], // languages to check (English)
           allowedProfanity, // words to ALLOW (don't block these)
-          [] // custom words to add (empty)
+          [], // custom words to add (empty)
         );
-        console.log(result);
+
         // Check if blocked profanity was found (words NOT in our allowed list)
         if (
           result &&
@@ -87,7 +89,7 @@ router.post("/", tokenChecker, async (req, res) => {
         ) {
           // Check if any blocked word is NOT in our allowed list
           const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase()),
           );
 
           if (hasDisallowedWords) {
@@ -134,6 +136,19 @@ router.post("/:id/play", async (req, res) => {
   const { id } = req.params;
   const { won } = req.body;
 
+  // Optionally decode JWT if present
+  let userId = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_KEY);
+      userId = decoded.id;
+    } catch (err) {
+      // Invalid token, ignore for guest play
+    }
+  }
+
   try {
     const game = await Game.findById(id);
     if (!game) return res.status(404).json({ message: "Game not found" });
@@ -141,6 +156,26 @@ router.post("/:id/play", async (req, res) => {
     game.plays += 1;
     if (won) game.wins += 1;
     await game.save();
+
+    // If user won and is authenticated, update their profile
+    if (won && userId) {
+      const user = await User.findById(userId);
+      if (user) {        // Check if user has already solved this game
+        const alreadySolved = user.gamesSolved.some(
+          (g) => g.gameId && g.gameId.toString() === id,
+        );
+        if (!alreadySolved) {
+          user.gamesSolved.push({ gameId: id, completedAt: new Date() });
+          console.log("Saving user with new solved game...");
+          await user.save();
+          console.log("User saved successfully with game ID:", id);
+        } else {
+          console.log("Game already solved by user.");
+        }
+      } else {
+        console.log("User not found for id:", userId);
+      }
+    }
 
     res.json({
       message: "Game stats updated",
@@ -151,6 +186,42 @@ router.post("/:id/play", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating game stats:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get number of wins for a user
+router.get("/wins/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ wins: user.gamesSolved ? user.gamesSolved.length : 0 });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch wins" });
+  }
+});
+
+router.get("/new", tokenChecker, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
+
+    // Find games not yet solved by the user
+    const unsolvedGames = await Game.find({
+      _id: { $nin: solvedIds },
+    });
+
+    // If all games are solved, fallback to all games
+    let gamesToChooseFrom =
+      unsolvedGames.length > 0 ? unsolvedGames : await Game.find();
+
+    // Randomly select a game (or use your own logic to "deprioritize" solved games)
+    const randomIndex = Math.floor(Math.random() * gamesToChooseFrom.length);
+    const selectedGame = gamesToChooseFrom[randomIndex];
+
+    res.json(selectedGame);
+  } catch (error) {
+    console.error("Error fetching new game:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
