@@ -9,6 +9,10 @@ const Game = new mongoose.Schema({
     ref: "User",
     required: false,
   },
+  tags: {
+    type: [String],
+    default: [],
+  },
   category1: {
     type: {
       name: {

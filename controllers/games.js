@@ -7,10 +7,31 @@ import User from "../models/User.js";
 // router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
 
+// Allowed curse words for NSFW game boards:
+const allowedProfanity = [
+  "teste",
+  "fuck",
+  "shit",
+  "bitch",
+  "cock",
+  "dick",
+  "pussy",
+  "ass",
+];
+
+// Function to check if content contains any NSFW language
+const checkForNSFWContent = (textArray) => {
+  const joinedText = textArray.join(" ").toLowerCase();
+  return allowedProfanity.some((word) =>
+    joinedText.includes(word.toLowerCase())
+  );
+};
+
 router.post("/", tokenChecker, async (req, res) => {
   try {
     const { name, category1, category2, category3, category4 } = req.body;
     const createdBy = req.user.id; // Add the user ID from the token
+
     // Validate the name field
     if (!name || typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({ message: "Game board name is required" });
@@ -34,7 +55,7 @@ router.post("/", tokenChecker, async (req, res) => {
         .json({ message: "Each category must have exactly 4 words" });
     }
 
-    // Use swearify to check for profanity
+    // Collect all text content for checking
     const allContent = [
       name,
       category1.name,
@@ -47,33 +68,49 @@ router.post("/", tokenChecker, async (req, res) => {
       ...category4.words,
     ].filter((text) => text && typeof text === "string" && text.trim() !== "");
 
+    // Check for disallowed profanity (block truly offensive words)
     for (const text of allContent) {
-      try {
-        const result = swearify.findAndFilter(
+      try {        const result = swearify.findAndFilter(
           text, // sentence to filter
           "*", // placeholder character
           ["en"], // languages to check (English)
-          [], // allowed swears (empty = none allowed)
+          allowedProfanity, // words to ALLOW (don't block these)
           [] // custom words to add (empty)
         );
-
-        // Check if profanity was found
-        if (
+        
+        // Check if blocked profanity was found (words NOT in our allowed list)        if (
           result &&
           result.found === true &&
           result.bad_words &&
           result.bad_words.length > 0
         ) {
-          return res.status(400).json({
-            message:
-              "Content contains inappropriate language and cannot be saved",
-          });
+          // Check if any blocked word is NOT in our allowed list
+          const hasDisallowedWords = result.bad_words.some(
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
+          );
+
+          if (hasDisallowedWords) {
+            return res.status(400).json({
+              message:
+                "Content contains inappropriate language and cannot be saved",
+            });
+          }
+        }
         }
       } catch (error) {
         console.error("Swearify error for text:", text, error);
         continue;
       }
     }
+
+    // Check if content should be tagged as NSFW (contains allowed profanity)
+    const isNSFW = checkForNSFWContent(allContent);
+    let tags = [];
+    if (isNSFW) {
+      tags.push("NSFW");
+    }
+
+    // Create the new game with tags
     const newGame = new Game({
       name,
       category1,
@@ -81,7 +118,9 @@ router.post("/", tokenChecker, async (req, res) => {
       category3,
       category4,
       createdBy,
+      tags,
     });
+
     await newGame.save();
     res.status(201).json(newGame);
   } catch (error) {
@@ -201,7 +240,8 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const game = await Game.findById(id);
+    // Populate createdBy with the username field
+    const game = await Game.findById(id).populate("createdBy", "username");
     res.status(200).json(game);
   } catch (error) {
     console.error("Error fetching game:", error);
@@ -214,11 +254,9 @@ router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const deletedGame = await Game.findByIdAndDelete(id);
-
     if (!deletedGame) {
       return res.status(404).json({ message: "Game not found" });
     }
-
     res.status(200).json({ message: "Game deleted successfully" });
   } catch (error) {
     console.error("Error deleting game:", error);
