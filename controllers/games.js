@@ -3,6 +3,7 @@ import Game from "../models/Games.js";
 import tokenChecker from "../middleware/auth.js";
 import swearify from "swearify";
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 // router for handling game-related API endpoints (CRUD operations)
 const router = express.Router();
@@ -23,7 +24,7 @@ const allowedProfanity = [
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
   return allowedProfanity.some((word) =>
-    joinedText.includes(word.toLowerCase())
+    joinedText.includes(word.toLowerCase()),
   );
 };
 
@@ -47,7 +48,7 @@ router.post("/", tokenChecker, async (req, res) => {
     } // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4
+        (cat) => cat.words.length === 4,
       )
     ) {
       return res
@@ -70,15 +71,17 @@ router.post("/", tokenChecker, async (req, res) => {
 
     // Check for disallowed profanity (block truly offensive words)
     for (const text of allContent) {
-      try {        const result = swearify.findAndFilter(
+      try {
+        const result = swearify.findAndFilter(
           text, // sentence to filter
           "*", // placeholder character
           ["en"], // languages to check (English)
           allowedProfanity, // words to ALLOW (don't block these)
-          [] // custom words to add (empty)
+          [], // custom words to add (empty)
         );
-        
-        // Check if blocked profanity was found (words NOT in our allowed list)        if (
+
+        // Check if blocked profanity was found (words NOT in our allowed list)
+        if (
           result &&
           result.found === true &&
           result.bad_words &&
@@ -86,7 +89,7 @@ router.post("/", tokenChecker, async (req, res) => {
         ) {
           // Check if any blocked word is NOT in our allowed list
           const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase()),
           );
 
           if (hasDisallowedWords) {
@@ -95,7 +98,6 @@ router.post("/", tokenChecker, async (req, res) => {
                 "Content contains inappropriate language and cannot be saved",
             });
           }
-        }
         }
       } catch (error) {
         console.error("Swearify error for text:", text, error);
@@ -158,15 +160,15 @@ router.post("/:id/play", async (req, res) => {
     // If user won and is authenticated, update their profile
     if (won && userId) {
       const user = await User.findById(userId);
-      if (user) {
+      if (user) {        // Check if user has already solved this game
         const alreadySolved = user.gamesSolved.some(
-          (g) => g.gameId.toString() === id
+          (g) => g.gameId && g.gameId.toString() === id,
         );
         if (!alreadySolved) {
           user.gamesSolved.push({ gameId: id, completedAt: new Date() });
           console.log("Saving user with new solved game...");
           await user.save();
-          console.log("User saved!");
+          console.log("User saved successfully with game ID:", id);
         } else {
           console.log("Game already solved by user.");
         }
