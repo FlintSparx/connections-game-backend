@@ -3,7 +3,13 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import swearify from "swearify";
+import { RegExpMatcher, englishDataset, englishRecommendedTransformers } from "obscenity";
+
+// Create obscenity matcher for username checking
+const matcher = new RegExpMatcher({
+  ...englishDataset.build(),
+  ...englishRecommendedTransformers,
+});
 
 // Register route
 const router = express.Router();
@@ -13,14 +19,15 @@ router.post("/register", async (req, res) => {
 
   // Check username for profanity
   try {
-    const result = swearify.findAndFilter(username, '*', ['en'], [], []);
-    if (result && result.found === true && result.bad_words && result.bad_words.length > 0) {
+    const hasMatch = matcher.hasMatch(username);
+    if (hasMatch) {
       return res.status(400).json({ message: "Username contains inappropriate language. Please choose a different username." });
     }
   } catch (error) {
-    console.error('Swearify error for username:', username, error);
-    // Continue with registration if swearify fails
+    console.error('Obscenity error for username:', username, error);
+    // Continue with registration if obscenity fails
   }
+
   const newUser = new User({
     username,
     email: email.toLowerCase(),
@@ -30,6 +37,7 @@ router.post("/register", async (req, res) => {
     dateOfBirth,
     isAdmin: false,
   });
+
   await newUser.save();
   res.json({ message: `User ${username} created successfully ` });
 });
@@ -37,7 +45,6 @@ router.post("/register", async (req, res) => {
 //Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
   try {
     // Find a user based on their username address
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -137,7 +144,9 @@ router.put("/profile/:id", async (req, res) => {
       {
         expiresIn: 60 * 60 * 24,
       }
-    );    res.json({
+    );
+    
+    res.json({
       message: "Profile updated successfully",
       token,
     });
@@ -166,7 +175,6 @@ router.delete("/profile/:id", async (req, res) => {
 
     // Delete user
     await User.findByIdAndDelete(req.params.id);
-
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Error deleting account:", error);
@@ -177,18 +185,22 @@ router.delete("/profile/:id", async (req, res) => {
 router.post("/:userId/:gameId", async (req, res) => {
   const { userId, gameId } = req.params;
   console.log("Adding game to user:", userId, gameId);
+
   try {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
     if (user.gamesSolved.some((game) => game._id.toString() === gameId)) {
       return res.status(400).json({ message: "Game already added to user" });
     }
+
     user.gamesSolved.push({
       _id: new mongoose.Types.ObjectId(gameId),
       completedAt: new Date(),
     });
+
     await user.save();
     res.json({ message: "Game added to user successfully" });
   } catch (error) {

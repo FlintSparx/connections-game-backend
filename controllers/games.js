@@ -1,7 +1,7 @@
 import express from "express";
 import Game from "../models/Games.js";
 import tokenChecker from "../middleware/auth.js";
-import swearify from "swearify";
+import { RegExpMatcher, englishDataset, englishRecommendedTransformers } from "obscenity";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
@@ -19,6 +19,17 @@ const allowedProfanity = [
   "pussy",
   "ass",
 ];
+
+// Create obscenity matcher
+const matcher = new RegExpMatcher({
+  ...englishDataset.build(),
+  ...englishRecommendedTransformers,
+});
+
+// Add allowed profanity words to whitelist so they don't get blocked
+allowedProfanity.forEach(word => {
+  matcher.addWhitelistedTerm(word);
+});
 
 // Function to check if content contains any NSFW language
 const checkForNSFWContent = (textArray) => {
@@ -45,7 +56,9 @@ router.post("/", tokenChecker, async (req, res) => {
       })
     ) {
       return res.status(400).json({ message: "Invalid game format" });
-    } // Validate that each category has exactly 4 words
+    }
+
+    // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
         (cat) => cat.words.length === 4,
@@ -72,25 +85,18 @@ router.post("/", tokenChecker, async (req, res) => {
     // Check for disallowed profanity (block truly offensive words)
     for (const text of allContent) {
       try {
-        const result = swearify.findAndFilter(
-          text, // sentence to filter
-          "*", // placeholder character
-          ["en"], // languages to check (English)
-          allowedProfanity, // words to ALLOW (don't block these)
-          [], // custom words to add (empty)
-        );
+        // Check if text contains profanity that's NOT in our allowed list
+        const hasMatch = matcher.hasMatch(text);
 
-        // Check if blocked profanity was found (words NOT in our allowed list)
-        if (
-          result &&
-          result.found === true &&
-          result.bad_words &&
-          result.bad_words.length > 0
-        ) {
-          // Check if any blocked word is NOT in our allowed list
-          const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase()),
-          );
+        if (hasMatch) {
+          // Get all matches to see what was found
+          const matches = matcher.getAllMatches(text);
+
+          // Check if any found profanity is NOT in our allowed list
+          const hasDisallowedWords = matches.some(match => {
+            const matchedText = text.substring(match.startIndex, match.endIndex).toLowerCase();
+            return !allowedProfanity.includes(matchedText);
+          });
 
           if (hasDisallowedWords) {
             return res.status(400).json({
@@ -100,13 +106,14 @@ router.post("/", tokenChecker, async (req, res) => {
           }
         }
       } catch (error) {
-        console.error("Swearify error for text:", text, error);
+        console.error("Obscenity error for text:", text, error);
         continue;
       }
     }
 
     // Check if content should be tagged as NSFW (contains allowed profanity)
     const isNSFW = checkForNSFWContent(allContent);
+
     let tags = [];
     if (isNSFW) {
       tags.push("NSFW");
@@ -135,14 +142,17 @@ router.post("/", tokenChecker, async (req, res) => {
 router.post("/:id/play", async (req, res) => {
   const { id } = req.params;
   const { won } = req.body;
+
   // Optionally decode JWT if present
   let userId = null;
   const authHeader = req.headers.authorization;
+
   console.log("Game play request:", {
     gameId: id,
     won,
     hasAuthHeader: !!authHeader,
   });
+
   if (authHeader && authHeader.startsWith("Bearer ")) {
     try {
       const token = authHeader.split(" ")[1];
@@ -159,6 +169,7 @@ router.post("/:id/play", async (req, res) => {
 
     game.plays += 1;
     if (won) game.wins += 1;
+
     await game.save();
 
     // If user won and is authenticated, update their profile
@@ -170,6 +181,7 @@ router.post("/:id/play", async (req, res) => {
           const alreadySolved = user.gamesSolved.some(
             (g) => g.gameId && g.gameId.toString() === id,
           );
+
           if (!alreadySolved) {
             user.gamesSolved.push({ gameId: id, completedAt: new Date() });
             await user.save();
@@ -202,6 +214,7 @@ router.get("/wins/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json({ wins: user.gamesSolved ? user.gamesSolved.length : 0 });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch wins" });
@@ -237,7 +250,6 @@ router.get("/", async (req, res) => {
   try {
     // Populate createdBy with just the username field
     const games = await Game.find().populate("createdBy", "username");
-
     // the games array should already have proper difficulty values
     res.status(200).json(games);
   } catch (error) {
