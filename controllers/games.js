@@ -26,11 +26,6 @@ const matcher = new RegExpMatcher({
   ...englishRecommendedTransformers,
 });
 
-// Add allowed profanity words to whitelist so they don't get blocked
-allowedProfanity.forEach(word => {
-  matcher.addWhitelistedTerm(word);
-});
-
 // Function to check if content contains any NSFW language
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
@@ -85,13 +80,13 @@ router.post("/", tokenChecker, async (req, res) => {
     // Check for disallowed profanity (block truly offensive words)
     for (const text of allContent) {
       try {
-        // Check if text contains profanity that's NOT in our allowed list
+        // Check if text contains profanity
         const hasMatch = matcher.hasMatch(text);
-
+        
         if (hasMatch) {
           // Get all matches to see what was found
           const matches = matcher.getAllMatches(text);
-
+          
           // Check if any found profanity is NOT in our allowed list
           const hasDisallowedWords = matches.some(match => {
             const matchedText = text.substring(match.startIndex, match.endIndex).toLowerCase();
