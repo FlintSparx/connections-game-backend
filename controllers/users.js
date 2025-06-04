@@ -241,12 +241,11 @@ router.post("/:userId/:gameId", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-    if (user.gamesSolved.some((game) => game._id.toString() === gameId)) {
+    }    if (user.gamesSolved.some((game) => game.gameId && game.gameId.toString() === gameId)) {
       return res.status(400).json({ message: "Game already added to user" });
     }
     user.gamesSolved.push({
-      _id: new mongoose.Types.ObjectId(gameId),
+      gameId: new mongoose.Types.ObjectId(gameId),
       completedAt: new Date(),
     });
     await user.save();
