@@ -24,7 +24,7 @@ const allowedProfanity = [
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
   return allowedProfanity.some((word) =>
-    joinedText.includes(word.toLowerCase()),
+    joinedText.includes(word.toLowerCase())
   );
 };
 
@@ -48,7 +48,7 @@ router.post("/", tokenChecker, async (req, res) => {
     } // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4,
+        (cat) => cat.words.length === 4
       )
     ) {
       return res
@@ -77,7 +77,7 @@ router.post("/", tokenChecker, async (req, res) => {
           "*", // placeholder character
           ["en"], // languages to check (English)
           allowedProfanity, // words to ALLOW (don't block these)
-          [], // custom words to add (empty)
+          [] // custom words to add (empty)
         );
 
         // Check if blocked profanity was found (words NOT in our allowed list)
@@ -89,7 +89,7 @@ router.post("/", tokenChecker, async (req, res) => {
         ) {
           // Check if any blocked word is NOT in our allowed list
           const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase()),
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
           );
 
           if (hasDisallowedWords) {
@@ -138,11 +138,11 @@ router.post("/:id/play", async (req, res) => {
   // Optionally decode JWT if present
   let userId = null;
   const authHeader = req.headers.authorization;
-  console.log("Game play request:", {
-    gameId: id,
-    won,
-    hasAuthHeader: !!authHeader,
-  });
+  // console.log("Game play request:", {
+  //   gameId: id,
+  //   won,
+  //   hasAuthHeader: !!authHeader,
+  // });
   if (authHeader && authHeader.startsWith("Bearer ")) {
     try {
       const token = authHeader.split(" ")[1];
@@ -168,7 +168,7 @@ router.post("/:id/play", async (req, res) => {
         if (user) {
           // Check if user has already solved this game
           const alreadySolved = user.gamesSolved.some(
-            (g) => g.gameId && g.gameId.toString() === id,
+            (g) => g.gameId && g.gameId.toString() === id
           );
           if (!alreadySolved) {
             user.gamesSolved.push({ gameId: id, completedAt: new Date() });
