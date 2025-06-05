@@ -4,11 +4,14 @@ const Game = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-  },
-  createdBy: {
+  },  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: false,
+  },
+  tags: {
+    type: [String],
+    default: [],
   },
   category1: {
     type: {
@@ -62,6 +65,33 @@ const Game = new mongoose.Schema({
     },
     required: true,
   },
+  plays: {
+    type: Number,
+    default: 0,
+  },
+  wins: {
+    type: Number,
+    default: 0,
+  },
 });
+
+Game.virtual("winPercentage").get(function () {
+  if (this.plays === 0) return 0;
+  return Math.round((this.wins / this.plays) * 100);
+});
+
+Game.virtual("difficulty").get(function () {
+  // Return 'unknown' if there are no plays yet
+  if (this.plays === 0) return "unknown";
+  
+  const winPct = this.winPercentage;
+  // Games with lower win percentages are harder
+  if (winPct <= 25) return "hard";
+  if (winPct <= 50) return "medium";
+  return "easy";
+});
+
+Game.set("toJSON", { virtuals: true });
+Game.set("toObject", { virtuals: true });
 
 export default mongoose.model("Game", Game);
