@@ -24,7 +24,7 @@ const allowedProfanity = [
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
   return allowedProfanity.some((word) =>
-    joinedText.includes(word.toLowerCase())
+    joinedText.includes(word.toLowerCase()),
   );
 };
 
@@ -48,7 +48,7 @@ router.post("/", tokenChecker, async (req, res) => {
     } // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4
+        (cat) => cat.words.length === 4,
       )
     ) {
       return res
@@ -77,7 +77,7 @@ router.post("/", tokenChecker, async (req, res) => {
           "*", // placeholder character
           ["en"], // languages to check (English)
           allowedProfanity, // words to ALLOW (don't block these)
-          [] // custom words to add (empty)
+          [], // custom words to add (empty)
         );
 
         // Check if blocked profanity was found (words NOT in our allowed list)
@@ -89,7 +89,7 @@ router.post("/", tokenChecker, async (req, res) => {
         ) {
           // Check if any blocked word is NOT in our allowed list
           const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase()),
           );
 
           if (hasDisallowedWords) {
@@ -168,7 +168,7 @@ router.post("/:id/play", async (req, res) => {
         if (user) {
           // Check if user has already solved this game
           const alreadySolved = user.gamesSolved.some(
-            (g) => g.gameId && g.gameId.toString() === id
+            (g) => g.gameId && g.gameId.toString() === id,
           );
           if (!alreadySolved) {
             user.gamesSolved.push({ gameId: id, completedAt: new Date() });
@@ -205,6 +205,22 @@ router.get("/wins/:userId", async (req, res) => {
     res.json({ wins: user.gamesSolved ? user.gamesSolved.length : 0 });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch wins" });
+  }
+});
+
+// Get list of solved games for a user
+router.get("/solved/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Extract just the gameId from each solved game
+    const solvedGameIds = user.gamesSolved
+      ? user.gamesSolved.map((game) => game.gameId.toString())
+      : [];
+    res.json({ solvedGames: solvedGameIds });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch solved games" });
   }
 });
 
