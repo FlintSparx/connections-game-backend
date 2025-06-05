@@ -135,10 +135,14 @@ router.post("/", tokenChecker, async (req, res) => {
 router.post("/:id/play", async (req, res) => {
   const { id } = req.params;
   const { won } = req.body;
-
   // Optionally decode JWT if present
   let userId = null;
   const authHeader = req.headers.authorization;
+  // console.log("Game play request:", {
+  //   gameId: id,
+  //   won,
+  //   hasAuthHeader: !!authHeader,
+  // });
   if (authHeader && authHeader.startsWith("Bearer ")) {
     try {
       const token = authHeader.split(" ")[1];
@@ -159,21 +163,24 @@ router.post("/:id/play", async (req, res) => {
 
     // If user won and is authenticated, update their profile
     if (won && userId) {
-      const user = await User.findById(userId);
-      if (user) {        // Check if user has already solved this game
-        const alreadySolved = user.gamesSolved.some(
-          (g) => g.gameId && g.gameId.toString() === id,
-        );
-        if (!alreadySolved) {
-          user.gamesSolved.push({ gameId: id, completedAt: new Date() });
-          console.log("Saving user with new solved game...");
-          await user.save();
-          console.log("User saved successfully with game ID:", id);
+      try {
+        const user = await User.findById(userId);
+        if (user) {
+          // Check if user has already solved this game
+          const alreadySolved = user.gamesSolved.some(
+            (g) => g.gameId && g.gameId.toString() === id,
+          );
+          if (!alreadySolved) {
+            user.gamesSolved.push({ gameId: id, completedAt: new Date() });
+            await user.save();
+          } else {
+            console.log("Game already solved by user.");
+          }
         } else {
-          console.log("Game already solved by user.");
+          console.log("User not found for id:", userId);
         }
-      } else {
-        console.log("User not found for id:", userId);
+      } catch (error) {
+        console.error("Error updating user with solved game:", error);
       }
     }
 
@@ -198,6 +205,22 @@ router.get("/wins/:userId", async (req, res) => {
     res.json({ wins: user.gamesSolved ? user.gamesSolved.length : 0 });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch wins" });
+  }
+});
+
+// Get list of solved games for a user
+router.get("/solved/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Extract just the gameId from each solved game
+    const solvedGameIds = user.gamesSolved
+      ? user.gamesSolved.map((game) => game.gameId.toString())
+      : [];
+    res.json({ solvedGames: solvedGameIds });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch solved games" });
   }
 });
 

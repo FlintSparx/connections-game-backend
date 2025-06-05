@@ -9,16 +9,27 @@ import swearify from "swearify";
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name, dateOfBirth } = req.body;
+  const { username, email, password, first_name, last_name, dateOfBirth } =
+    req.body;
 
   // Check username for profanity
   try {
-    const result = swearify.findAndFilter(username, '*', ['en'], [], []);
-    if (result && result.found === true && result.bad_words && result.bad_words.length > 0) {
-      return res.status(400).json({ message: "Username contains inappropriate language. Please choose a different username." });
+    const result = swearify.findAndFilter(username, "*", ["en"], [], []);
+    if (
+      result &&
+      result.found === true &&
+      result.bad_words &&
+      result.bad_words.length > 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Username contains inappropriate language. Please choose a different username.",
+        });
     }
   } catch (error) {
-    console.error('Swearify error for username:', username, error);
+    console.error("Swearify error for username:", username, error);
     // Continue with registration if swearify fails
   }
   const newUser = new User({
@@ -95,7 +106,14 @@ router.get("/profile/:id", async (req, res) => {
 // Update user profile
 router.put("/profile/:id", async (req, res) => {
   try {
-    const { username, email, first_name, last_name, currentPassword, newPassword } = req.body;
+    const {
+      username,
+      email,
+      first_name,
+      last_name,
+      currentPassword,
+      newPassword,
+    } = req.body;
 
     // Find user
     const user = await User.findById(req.params.id);
@@ -137,7 +155,9 @@ router.put("/profile/:id", async (req, res) => {
       {
         expiresIn: 60 * 60 * 24,
       }
-    );    res.json({
+    );
+
+    res.json({
       message: "Profile updated successfully",
       token,
     });
