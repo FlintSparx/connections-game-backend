@@ -77,17 +77,6 @@ router.post("/login", async (req, res) => {
     // Check fields that can be auto-populated
     console.log("User document:", JSON.stringify(user));
 
-    // Check if gamesSolved property exists in the document
-    if (!user.hasOwnProperty("gamesSolved")) {
-      console.log("gamesSolved property is completely missing - adding it");
-      updateData.gamesSolved = [];
-      needsUpdate = true;
-    } else if (!Array.isArray(user.gamesSolved)) {
-      console.log("gamesSolved exists but is not an array - fixing it");
-      updateData.gamesSolved = [];
-      needsUpdate = true;
-    }
-
     // Check fields that require user input
     if (!user.dateOfBirth) {
       console.log("User needs to provide dateOfBirth");
@@ -98,6 +87,7 @@ router.post("/login", async (req, res) => {
         "Applying automatic updates to user account:",
         JSON.stringify(updateData)
       );
+
       await User.findByIdAndUpdate(user._id, updateData);
 
       // Reload user to get updated data

@@ -209,6 +209,23 @@ router.post("/:id/play", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Get list of solved games for a user
+router.get("/solved/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Extract just the gameId from each solved game
+    const solvedGameIds = user.gamesSolved
+      ? user.gamesSolved.map((game) => game.gameId.toString())
+      : [];
+    res.json({ solvedGames: solvedGameIds });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch solved games" });
+  }
+});
+
 // Get number of wins for a user
 router.get("/wins/:userId", async (req, res) => {
   try {
