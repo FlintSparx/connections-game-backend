@@ -26,12 +26,10 @@ router.post("/register", async (req, res) => {
   try {
     const hasMatch = matcher.hasMatch(username);
     if (hasMatch) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Username contains inappropriate language. Please choose a different username.",
-        });
+      return res.status(400).json({
+        message:
+          "Username contains inappropriate language. Please choose a different username.",
+      });
     }
   } catch (error) {
     console.error("Obscenity error for username:", username, error);
