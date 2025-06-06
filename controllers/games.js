@@ -33,9 +33,14 @@ const containsBlockedWords = (text) => {
 // Function to check if content contains any NSFW language (allowed words for tagging)
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
+<<<<<<< HEAD
   const allowedNSFWWords = ["teste", "fuck", "shit", "bitch", "cock", "dick", "pussy", "ass"];
   return allowedNSFWWords.some((word) =>
     joinedText.includes(word.toLowerCase()),
+=======
+  return allowedProfanity.some((word) =>
+    joinedText.includes(word.toLowerCase())
+>>>>>>> main
   );
 };
 
@@ -58,7 +63,7 @@ router.post("/", tokenChecker, async (req, res) => {
     // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4,
+        (cat) => cat.words.length === 4
       )
     ) {
       return res
@@ -79,10 +84,44 @@ router.post("/", tokenChecker, async (req, res) => {
     ].filter((text) => text && typeof text === "string" && text.trim() !== "");
     // Check for blocked profanity
     for (const text of allContent) {
+<<<<<<< HEAD
       if (containsBlockedWords(text)) {
         return res.status(400).json({
           message: "Content contains inappropriate language and cannot be saved",
         });
+=======
+      try {
+        const result = swearify.findAndFilter(
+          text, // sentence to filter
+          "*", // placeholder character
+          ["en"], // languages to check (English)
+          allowedProfanity, // words to ALLOW (don't block these)
+          [] // custom words to add (empty)
+        );
+
+        // Check if blocked profanity was found (words NOT in our allowed list)
+        if (
+          result &&
+          result.found === true &&
+          result.bad_words &&
+          result.bad_words.length > 0
+        ) {
+          // Check if any blocked word is NOT in our allowed list
+          const hasDisallowedWords = result.bad_words.some(
+            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
+          );
+
+          if (hasDisallowedWords) {
+            return res.status(400).json({
+              message:
+                "Content contains inappropriate language and cannot be saved",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Swearify error for text:", text, error);
+        continue;
+>>>>>>> main
       }
     }
     // Check if content should be tagged as NSFW (contains allowed profanity)
@@ -115,11 +154,11 @@ router.post("/:id/play", async (req, res) => {
   // Optionally decode JWT if present
   let userId = null;
   const authHeader = req.headers.authorization;
-  console.log("Game play request:", {
-    gameId: id,
-    won,
-    hasAuthHeader: !!authHeader,
-  });
+  // console.log("Game play request:", {
+  //   gameId: id,
+  //   won,
+  //   hasAuthHeader: !!authHeader,
+  // });
   if (authHeader && authHeader.startsWith("Bearer ")) {
     try {
       const token = authHeader.split(" ")[1];
@@ -142,7 +181,7 @@ router.post("/:id/play", async (req, res) => {
         if (user) {
           // Check if user has already solved this game
           const alreadySolved = user.gamesSolved.some(
-            (g) => g.gameId && g.gameId.toString() === id,
+            (g) => g.gameId && g.gameId.toString() === id
           );
           if (!alreadySolved) {
             user.gamesSolved.push({ gameId: id, completedAt: new Date() });
