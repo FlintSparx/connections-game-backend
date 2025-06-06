@@ -9,38 +9,72 @@ const router = express.Router();
 // Words to block
 const blockedWords = [
   // Racial slurs
-  "nigger", "nigga", "chink", "gook", "spic", "wetback", "kike", "jap", 
-  "towelhead", "raghead", "sandnigger", "beaner", "honkey", "cracker", 
-  "whitey", "redskin", "injun", "squaw", "gyp", "gypsy",
+  "nigger",
+  "nigga",
+  "chink",
+  "gook",
+  "spic",
+  "wetback",
+  "kike",
+  "jap",
+  "towelhead",
+  "raghead",
+  "sandnigger",
+  "beaner",
+  "honkey",
+  "cracker",
+  "whitey",
+  "redskin",
+  "injun",
+  "squaw",
+  "gyp",
+  "gypsy",
   // Homophobic/transphobic slurs
-  "faggot", "fag", "dyke", "tranny", "shemale",
+  "faggot",
+  "fag",
+  "dyke",
+  "tranny",
+  "shemale",
   // Misogynistic terms
-  "cunt", "whore", "slut", "skank",
+  "cunt",
+  "whore",
+  "slut",
+  "skank",
   // Ableist slurs
-  "retard", "retarded", "spastic", "mongoloid", "midget",
+  "retard",
+  "retarded",
+  "spastic",
+  "mongoloid",
+  "midget",
   // Religious slurs
-  "infidel", "heathen",
+  "infidel",
+  "heathen",
   // Other highly offensive terms
-  "nazi", "hitler"
+  "nazi",
+  "hitler",
 ];
 
 // Function to check for blocked words
 const containsBlockedWords = (text) => {
   const lowerText = text.toLowerCase();
-  return blockedWords.some(word => lowerText.includes(word.toLowerCase()));
+  return blockedWords.some((word) => lowerText.includes(word.toLowerCase()));
 };
 
 // Function to check if content contains any NSFW language (allowed words for tagging)
 const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
-<<<<<<< HEAD
-  const allowedNSFWWords = ["teste", "fuck", "shit", "bitch", "cock", "dick", "pussy", "ass"];
+  const allowedNSFWWords = [
+    "teste",
+    "fuck",
+    "shit",
+    "bitch",
+    "cock",
+    "dick",
+    "pussy",
+    "ass",
+  ];
   return allowedNSFWWords.some((word) =>
-    joinedText.includes(word.toLowerCase()),
-=======
-  return allowedProfanity.some((word) =>
     joinedText.includes(word.toLowerCase())
->>>>>>> main
   );
 };
 
@@ -84,44 +118,11 @@ router.post("/", tokenChecker, async (req, res) => {
     ].filter((text) => text && typeof text === "string" && text.trim() !== "");
     // Check for blocked profanity
     for (const text of allContent) {
-<<<<<<< HEAD
       if (containsBlockedWords(text)) {
         return res.status(400).json({
-          message: "Content contains inappropriate language and cannot be saved",
+          message:
+            "Content contains inappropriate language and cannot be saved",
         });
-=======
-      try {
-        const result = swearify.findAndFilter(
-          text, // sentence to filter
-          "*", // placeholder character
-          ["en"], // languages to check (English)
-          allowedProfanity, // words to ALLOW (don't block these)
-          [] // custom words to add (empty)
-        );
-
-        // Check if blocked profanity was found (words NOT in our allowed list)
-        if (
-          result &&
-          result.found === true &&
-          result.bad_words &&
-          result.bad_words.length > 0
-        ) {
-          // Check if any blocked word is NOT in our allowed list
-          const hasDisallowedWords = result.bad_words.some(
-            (badWord) => !allowedProfanity.includes(badWord.toLowerCase())
-          );
-
-          if (hasDisallowedWords) {
-            return res.status(400).json({
-              message:
-                "Content contains inappropriate language and cannot be saved",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Swearify error for text:", text, error);
-        continue;
->>>>>>> main
       }
     }
     // Check if content should be tagged as NSFW (contains allowed profanity)

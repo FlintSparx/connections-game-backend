@@ -3,7 +3,11 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import { RegExpMatcher, englishDataset, englishRecommendedTransformers } from "obscenity";
+import {
+  RegExpMatcher,
+  englishDataset,
+  englishRecommendedTransformers,
+} from "obscenity";
 
 // Create obscenity matcher for username checking
 const matcher = new RegExpMatcher({
@@ -20,31 +24,18 @@ router.post("/register", async (req, res) => {
 
   // Check username for profanity
   try {
-<<<<<<< HEAD
     const hasMatch = matcher.hasMatch(username);
     if (hasMatch) {
-      return res.status(400).json({ message: "Username contains inappropriate language. Please choose a different username." });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Username contains inappropriate language. Please choose a different username.",
+        });
     }
   } catch (error) {
-    console.error('Obscenity error for username:', username, error);
+    console.error("Obscenity error for username:", username, error);
     // Continue with registration if obscenity fails
-=======
-    const result = swearify.findAndFilter(username, "*", ["en"], [], []);
-    if (
-      result &&
-      result.found === true &&
-      result.bad_words &&
-      result.bad_words.length > 0
-    ) {
-      return res.status(400).json({
-        message:
-          "Username contains inappropriate language. Please choose a different username.",
-      });
-    }
-  } catch (error) {
-    console.error("Swearify error for username:", username, error);
-    // Continue with registration if swearify fails
->>>>>>> main
   }
 
   const newUser = new User({
@@ -107,7 +98,7 @@ router.post("/login", async (req, res) => {
     if (needsUpdate) {
       console.log(
         "Applying automatic updates to user account:",
-        JSON.stringify(updateData),
+        JSON.stringify(updateData)
       );
       await User.findByIdAndUpdate(user._id, updateData);
 
@@ -128,7 +119,7 @@ router.post("/login", async (req, res) => {
       process.env.JWT_KEY,
       {
         expiresIn: 60 * 60 * 24,
-      },
+      }
     );
 
     res.json({
@@ -195,7 +186,7 @@ router.put("/profile/:id", async (req, res) => {
     if (newPassword && newPassword.trim() !== "") {
       user.password = await bcryptjs.hash(
         newPassword,
-        parseInt(process.env.SALT),
+        parseInt(process.env.SALT)
       );
     }
 
@@ -212,14 +203,8 @@ router.put("/profile/:id", async (req, res) => {
       process.env.JWT_KEY,
       {
         expiresIn: 60 * 60 * 24,
-<<<<<<< HEAD
       }
     );
-    
-=======
-      },
-    );
->>>>>>> main
     res.json({
       message: "Profile updated successfully",
       token,
@@ -264,13 +249,9 @@ router.post("/:userId/:gameId", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-<<<<<<< HEAD
     }
 
     if (user.gamesSolved.some((game) => game._id.toString() === gameId)) {
-=======
-    }    if (user.gamesSolved.some((game) => game.gameId && game.gameId.toString() === gameId)) {
->>>>>>> main
       return res.status(400).json({ message: "Game already added to user" });
     }
 
