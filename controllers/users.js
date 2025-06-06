@@ -90,7 +90,7 @@ router.post("/login", async (req, res) => {
     if (needsUpdate) {
       console.log(
         "Applying automatic updates to user account:",
-        JSON.stringify(updateData),
+        JSON.stringify(updateData)
       );
       await User.findByIdAndUpdate(user._id, updateData);
 
@@ -111,7 +111,7 @@ router.post("/login", async (req, res) => {
       process.env.JWT_KEY,
       {
         expiresIn: 60 * 60 * 24,
-      },
+      }
     );
 
     res.json({
@@ -178,7 +178,7 @@ router.put("/profile/:id", async (req, res) => {
     if (newPassword && newPassword.trim() !== "") {
       user.password = await bcryptjs.hash(
         newPassword,
-        parseInt(process.env.SALT),
+        parseInt(process.env.SALT)
       );
     }
 
@@ -195,7 +195,7 @@ router.put("/profile/:id", async (req, res) => {
       process.env.JWT_KEY,
       {
         expiresIn: 60 * 60 * 24,
-      },
+      }
     );
     res.json({
       message: "Profile updated successfully",
@@ -241,7 +241,12 @@ router.post("/:userId/:gameId", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }    if (user.gamesSolved.some((game) => game.gameId && game.gameId.toString() === gameId)) {
+    }
+    if (
+      user.gamesSolved.some(
+        (game) => game.gameId && game.gameId.toString() === gameId
+      )
+    ) {
       return res.status(400).json({ message: "Game already added to user" });
     }
     user.gamesSolved.push({
