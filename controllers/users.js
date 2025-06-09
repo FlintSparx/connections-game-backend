@@ -3,37 +3,76 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import {
-  RegExpMatcher,
-  englishDataset,
-  englishRecommendedTransformers,
-} from "obscenity";
-
-// Create obscenity matcher for username checking
-const matcher = new RegExpMatcher({
-  ...englishDataset.build(),
-  ...englishRecommendedTransformers,
-});
 
 // Register route
 const router = express.Router();
+
+// Profanity Filter function
+const containsBlockedWords = (text) => {
+  const blockedWords = [
+    // Racial slurs
+    "nigger", "nigga", "chink", "gook", "spic", "wetback", "kike", "jap",
+    "towelhead", "raghead", "sandnigger", "beaner", "honkey", "cracker",
+    "whitey", "redskin", "injun", "squaw", "gyp", "gypsy", "slope",
+    "zipperhead", "jungle bunny", "porch monkey", "sand monkey",
+    // Homophobic/transphobic slurs
+    "faggot", "fag", "dyke", "tranny", "shemale", "homo", "pansy", "sissy",
+    // Misogynistic terms
+    "cunt", "whore", "slut", "skank",
+    // Ableist slurs
+    "retard", "retarded", "spastic", "mongoloid", "midget",
+    // Religious slurs
+    "infidel", "heathen",
+    // Other highly offensive terms
+    "nazi", "hitler",
+    // General profanities/swears
+    "fuck", "shit", "bitch", "cock", "dick", "pussy", "ass", "bastard",
+    "damn", "hell", "piss", "bullshit", "goddamn", "bloody", "prick",
+    "asshole", "dickhead", "shithead", "fuckface", "motherfucker",
+    "sonofabitch", "jackass", "dumbass", "smartass", "badass", "fatass",
+    "piece of shit", "full of shit", "horseshit", "dipshit", "chickenshit",
+    "apeshit", "batshit", "holy shit", "no shit", "tough shit",
+    "eat shit", "shit for brains", "shitty", "shittier", "shittiest",
+    "fucking", "fucked", "fucker", "fuckery", "unfuckingbelievable",
+    "clusterfuck", "mindfuck", "brainfuck", "what the fuck", "wtf",
+    "for fuck's sake", "fuck off", "fuck you", "go fuck yourself",
+    "bitchy", "bitchier", "bitchiest", "bitchass", "basic bitch",
+    "son of a bitch", "bitch please", "crazy bitch", "stupid bitch",
+    "douchebag", "douche", "douchecanoe", "scumbag", "shitbag",
+    "dirtbag", "sleazebag", "slimeball", "creep", "pervert", "perv",
+    "wanker", "tosser", "bellend", "knobhead", "twat", "git", "pillock",
+    "minger", "munter", "chavvy", "pikey", "gyppo", "spunk", "fanny",
+    "bugger", "sod", "prat", "plonker", "wazzock", "numpty", "muppet",
+    "crap", "crud", "turd", "dickwad", "dickweed", "peckerhead", "schmuck",
+    "putz", "dump", "poop", "fart", "fecal",
+    // Sex terms
+    "cum", "jizz", "tits", "boobs", "titties", "boobies", "porn", "sex",
+    "orgasm", "masturbate", "anal", "blowjob", "handjob", "69", "dildo",
+    "vibrator", "horny", "slutty", "sexy", "nude", "naked", "semen", "penis",
+    "vagina", "clitoris", "testicles", "balls", "scrotum", "labia", "nipples",
+    "erection", "ejaculate", "aroused", "climax", "foreplay", "intercourse",
+    "penetration", "threesome", "orgy", "bondage", "fetish", "kinky", "bdsm",
+    "dominatrix", "submissive", "spanking", "whip", "latex", "leather",
+    "pegging", "rimjob", "facial", "creampie", "gangbang", "bukkake",
+    "milf", "cougar", "virgin", "deflower", "missionary", "doggy", "cowgirl",
+    "dong", "schlong", "pecker", "wiener", "johnson", "rod", "meat", "member",
+    // Drug/substance terms
+    "weed", "pot", "ganja", "420", "blunt", "joint", "bong", "stoner", "pothead"
+  ];
+
+  const lowerText = text.toLowerCase();
+  return blockedWords.some(word => lowerText.includes(word.toLowerCase()));
+};
 
 router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name, dateOfBirth } =
     req.body;
 
-  // Check username for profanity
-  try {
-    const hasMatch = matcher.hasMatch(username);
-    if (hasMatch) {
-      return res.status(400).json({
-        message:
-          "Username contains inappropriate language. Please choose a different username.",
-      });
-    }
-  } catch (error) {
-    console.error("Obscenity error for username:", username, error);
-    // Continue with registration if obscenity fails
+    // Check username for profanity
+  if (containsBlockedWords(username)) {
+    return res.status(400).json({ 
+      message: "Username contains inappropriate language and cannot be used" 
+    });
   }
 
   const newUser = new User({
@@ -54,7 +93,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Find a user based on their username address
+    // Find a user based on their email address
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -146,6 +185,13 @@ router.put("/profile/:id", async (req, res) => {
       newPassword,
       dateOfBirth,
     } = req.body;
+
+    // Check for inappropriate content in username
+    if (containsBlockedWords(username)) {
+      return res.status(400).json({ 
+        message: "Username contains inappropriate language and cannot be used" 
+      });
+    }
 
     // Find user
     const user = await User.findById(req.params.id);
