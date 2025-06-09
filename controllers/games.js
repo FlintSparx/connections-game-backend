@@ -236,18 +236,50 @@ router.get("/wins/:userId", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch wins" });
   }
 });
-router.get("/new", tokenChecker, async (req, res) => {
+router.get("/new", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
-    // Find games not yet solved by the user
-    const unsolvedGames = await Game.find({
-      _id: { $nin: solvedIds },
-    });
-    // If all games are solved, fallback to all games
-    let gamesToChooseFrom =
-      unsolvedGames.length > 0 ? unsolvedGames : await Game.find();
-    // Randomly select a game (or use your own logic to "deprioritize" solved games)
+    // Optionally decode JWT if present
+    let userId = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        userId = decoded.id;
+      } catch (err) {
+        // Invalid token, ignore for guest play - continue as non-logged-in user
+      }
+    }
+
+    let gamesToChooseFrom;
+    
+    if (userId) {
+      // User is logged in - deprioritize solved games
+      const user = await User.findById(userId);
+      if (user && user.gamesSolved) {
+        const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
+        // Find games not yet solved by the user
+        const unsolvedGames = await Game.find({
+          _id: { $nin: solvedIds },
+        });
+        // If all games are solved, fallback to all games
+        gamesToChooseFrom =
+          unsolvedGames.length > 0 ? unsolvedGames : await Game.find();
+      } else {
+        // User found but no solved games
+        gamesToChooseFrom = await Game.find();
+      }
+    } else {
+      // User not logged in - return any random game
+      gamesToChooseFrom = await Game.find();
+    }
+
+    if (gamesToChooseFrom.length === 0) {
+      return res.status(404).json({ message: "No games available" });
+    }
+
+    // Randomly select a game
     const randomIndex = Math.floor(Math.random() * gamesToChooseFrom.length);
     const selectedGame = gamesToChooseFrom[randomIndex];
     res.json(selectedGame);
