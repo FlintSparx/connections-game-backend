@@ -74,7 +74,7 @@ const checkForNSFWContent = (textArray) => {
     "ass",
   ];
   return allowedNSFWWords.some((word) =>
-    joinedText.includes(word.toLowerCase())
+    joinedText.includes(word.toLowerCase()),
   );
 };
 
@@ -97,7 +97,7 @@ router.post("/", tokenChecker, async (req, res) => {
     // Validate that each category has exactly 4 words
     if (
       ![category1, category2, category3, category4].every(
-        (cat) => cat.words.length === 4
+        (cat) => cat.words.length === 4,
       )
     ) {
       return res
@@ -182,7 +182,7 @@ router.post("/:id/play", async (req, res) => {
         if (user) {
           // Check if user has already solved this game
           const alreadySolved = user.gamesSolved.some(
-            (g) => g.gameId && g.gameId.toString() === id
+            (g) => g.gameId && g.gameId.toString() === id,
           );
           if (!alreadySolved) {
             user.gamesSolved.push({ gameId: id, completedAt: new Date() });
@@ -236,21 +236,48 @@ router.get("/wins/:userId", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch wins" });
   }
 });
-router.get("/new", tokenChecker, async (req, res) => {
+router.get("/new", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
-    // Find games not yet solved by the user
-    const unsolvedGames = await Game.find({
-      _id: { $nin: solvedIds },
-    });
-    // If all games are solved, fallback to all games
-    let gamesToChooseFrom =
-      unsolvedGames.length > 0 ? unsolvedGames : await Game.find();
-    // Randomly select a game (or use your own logic to "deprioritize" solved games)
-    const randomIndex = Math.floor(Math.random() * gamesToChooseFrom.length);
-    const selectedGame = gamesToChooseFrom[randomIndex];
-    res.json(selectedGame);
+    // Get all games
+    const allGames = await Game.find();
+
+    if (allGames.length === 0) {
+      return res.status(404).json({ message: "No games available" });
+    }
+
+    // For logged-in users, try to prioritize unsolved games
+    let userId = null;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        userId = decoded.id;
+
+        const user = await User.findById(userId);
+        if (user && user.gamesSolved && user.gamesSolved.length > 0) {
+          const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
+          const unsolvedGames = allGames.filter(
+            (game) => !solvedIds.includes(game._id.toString()),
+          );
+
+          // If user has unsolved games, pick from those, otherwise pick from all
+          if (unsolvedGames.length > 0) {
+            const randomIndex = Math.floor(
+              Math.random() * unsolvedGames.length,
+            );
+            return res.json(unsolvedGames[randomIndex]);
+          }
+        }
+      } catch (err) {
+        // Invalid token, continue as guest
+      }
+    }
+
+    // Default: pick random game from all games (for guests or users with all games solved)
+    const randomIndex = Math.floor(Math.random() * allGames.length);
+    res.json(allGames[randomIndex]);
   } catch (error) {
     console.error("Error fetching new game:", error);
     res.status(500).json({ message: "Internal server error" });
