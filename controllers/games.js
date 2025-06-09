@@ -239,13 +239,14 @@ router.get("/wins/:userId", async (req, res) => {
 router.get("/new", async (req, res) => {
   try {
     // Get all games
-    const allGames = await Game.find();
+    let allGames = await Game.find();
 
     if (allGames.length === 0) {
       return res.status(404).json({ message: "No games available" });
     }
 
-    // For logged-in users, try to prioritize unsolved games
+    // Check if user is adult (18+) and logged in
+    let isAdult = false;
     let userId = null;
     const authHeader = req.headers.authorization;
 
@@ -255,6 +256,37 @@ router.get("/new", async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_KEY);
         userId = decoded.id;
 
+        // Check if user has dateOfBirth and is 18+
+        if (decoded.dateOfBirth) {
+          const today = new Date();
+          const birthDate = new Date(decoded.dateOfBirth);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          
+          // Adjust age if birthday hasn't occurred this year
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          
+          isAdult = age >= 18;
+        }
+      } catch (err) {
+        // Invalid token, continue as guest (isAdult = false)
+      }
+    }
+
+    // Filter out NSFW games if user is not adult or not logged in
+    if (!isAdult) {
+      allGames = allGames.filter(game => !game.tags?.includes("NSFW"));
+      
+      if (allGames.length === 0) {
+        return res.status(404).json({ message: "No non-NSFW games available" });
+      }
+    }
+
+    // For logged-in users, try to prioritize unsolved games
+    if (userId) {
+      try {
         const user = await User.findById(userId);
         if (user && user.gamesSolved && user.gamesSolved.length > 0) {
           const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
@@ -271,11 +303,11 @@ router.get("/new", async (req, res) => {
           }
         }
       } catch (err) {
-        // Invalid token, continue as guest
+        // Error fetching user, continue to default selection
       }
     }
 
-    // Default: pick random game from all games (for guests or users with all games solved)
+    // Default: pick random game from filtered games
     const randomIndex = Math.floor(Math.random() * allGames.length);
     res.json(allGames[randomIndex]);
   } catch (error) {
