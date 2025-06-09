@@ -12,20 +12,57 @@ const router = express.Router();
 
 const blockedWords = [
   // Racial slurs
-  "nigger", "nigga", "chink", "gook", "spic", "wetback", "kike", "jap",
-  "towelhead", "raghead", "sandnigger", "beaner", "honkey", "cracker",
-  "whitey", "redskin", "injun", "squaw", "gyp", "gypsy", "slope",
-  "zipperhead", "jungle bunny", "porch monkey", "sand monkey",
+  "nigger",
+  "nigga",
+  "chink",
+  "gook",
+  "spic",
+  "wetback",
+  "kike",
+  "jap",
+  "towelhead",
+  "raghead",
+  "sandnigger",
+  "beaner",
+  "honkey",
+  "cracker",
+  "whitey",
+  "redskin",
+  "injun",
+  "squaw",
+  "gyp",
+  "gypsy",
+  "slope",
+  "zipperhead",
+  "jungle bunny",
+  "porch monkey",
+  "sand monkey",
   // Homophobic/transphobic slurs
-  "faggot", "fag", "dyke", "tranny", "shemale", "homo", "pansy", "sissy",
+  "faggot",
+  "fag",
+  "dyke",
+  "tranny",
+  "shemale",
+  "homo",
+  "pansy",
+  "sissy",
   // Misogynistic terms
-  "cunt", "whore", "slut", "skank",
+  "cunt",
+  "whore",
+  "slut",
+  "skank",
   // Ableist slurs
-  "retard", "retarded", "spastic", "mongoloid", "midget",
+  "retard",
+  "retarded",
+  "spastic",
+  "mongoloid",
+  "midget",
   // Religious slurs
-  "infidel", "heathen",
+  "infidel",
+  "heathen",
   // Other highly offensive terms
-  "nazi", "hitler",
+  "nazi",
+  "hitler",
 ];
 
 // Function to check for blocked words
@@ -41,38 +78,195 @@ const checkForNSFWContent = (textArray) => {
   const joinedText = textArray.join(" ").toLowerCase();
   const allowedNSFWWords = [
     // General profanities/swears
-    "fuck", "shit", "bitch", "cock", "dick", "pussy", "ass", "bastard",
-    "damn", "hell", "piss", "bullshit", "goddamn", "bloody", "prick",
-    "asshole", "dickhead", "shithead", "fuckface", "motherfucker",
-    "sonofabitch", "jackass", "dumbass", "smartass", "badass", "fatass",
-    "piece of shit", "full of shit", "horseshit", "dipshit", "chickenshit",
-    "apeshit", "batshit", "holy shit", "no shit", "tough shit",
-    "eat shit", "shit for brains", "shitty", "shittier", "shittiest",
-    "fucking", "fucked", "fucker", "fuckery", "unfuckingbelievable",
-    "clusterfuck", "mindfuck", "brainfuck", "what the fuck", "wtf",
-    "for fuck's sake", "fuck off", "fuck you", "go fuck yourself",
-    "bitchy", "bitchier", "bitchiest", "bitchass", "basic bitch",
-    "son of a bitch", "bitch please", "crazy bitch", "stupid bitch",
-    "douchebag", "douche", "douchecanoe", "scumbag", "shitbag",
-    "dirtbag", "sleazebag", "slimeball", "creep", "pervert", "perv",
-    "wanker", "tosser", "bellend", "knobhead", "twat", "git", "pillock",
-    "minger", "munter", "chavvy", "pikey", "gyppo", "spunk", "fanny",
-    "bugger", "sod", "prat", "plonker", "wazzock", "numpty", "muppet",
-    "crap", "crud", "turd", "dickwad", "dickweed", "peckerhead", "schmuck",
-    "putz", "dump", "poop", "fart", "fecal",
+    "fuck",
+    "shit",
+    "bitch",
+    "cock",
+    "dick",
+    "pussy",
+    "ass",
+    "bastard",
+    "damn",
+    "hell",
+    "piss",
+    "bullshit",
+    "goddamn",
+    "bloody",
+    "prick",
+    "asshole",
+    "dickhead",
+    "shithead",
+    "fuckface",
+    "motherfucker",
+    "sonofabitch",
+    "jackass",
+    "dumbass",
+    "smartass",
+    "badass",
+    "fatass",
+    "piece of shit",
+    "full of shit",
+    "horseshit",
+    "dipshit",
+    "chickenshit",
+    "apeshit",
+    "batshit",
+    "holy shit",
+    "no shit",
+    "tough shit",
+    "eat shit",
+    "shit for brains",
+    "shitty",
+    "shittier",
+    "shittiest",
+    "fucking",
+    "fucked",
+    "fucker",
+    "fuckery",
+    "unfuckingbelievable",
+    "clusterfuck",
+    "mindfuck",
+    "brainfuck",
+    "what the fuck",
+    "wtf",
+    "for fuck's sake",
+    "fuck off",
+    "fuck you",
+    "go fuck yourself",
+    "bitchy",
+    "bitchier",
+    "bitchiest",
+    "bitchass",
+    "basic bitch",
+    "son of a bitch",
+    "bitch please",
+    "crazy bitch",
+    "stupid bitch",
+    "douchebag",
+    "douche",
+    "douchecanoe",
+    "scumbag",
+    "shitbag",
+    "dirtbag",
+    "sleazebag",
+    "slimeball",
+    "creep",
+    "pervert",
+    "perv",
+    "wanker",
+    "tosser",
+    "bellend",
+    "knobhead",
+    "twat",
+    "git",
+    "pillock",
+    "minger",
+    "munter",
+    "chavvy",
+    "pikey",
+    "gyppo",
+    "spunk",
+    "fanny",
+    "bugger",
+    "sod",
+    "prat",
+    "plonker",
+    "wazzock",
+    "numpty",
+    "muppet",
+    "crap",
+    "crud",
+    "turd",
+    "dickwad",
+    "dickweed",
+    "peckerhead",
+    "schmuck",
+    "putz",
+    "dump",
+    "poop",
+    "fart",
+    "fecal",
     // Sex terms
-    "cum", "jizz", "tits", "boobs", "titties", "boobies", "porn", "sex",
-    "orgasm", "masturbate", "anal", "blowjob", "handjob", "69", "dildo",
-    "vibrator", "horny", "slutty", "sexy", "nude", "naked", "semen", "penis",
-    "vagina", "clitoris", "testicles", "balls", "scrotum", "labia", "nipples",
-    "erection", "ejaculate", "aroused", "climax", "foreplay", "intercourse",
-    "penetration", "threesome", "orgy", "bondage", "fetish", "kinky", "bdsm",
-    "dominatrix", "submissive", "spanking", "whip", "latex", "leather",
-    "pegging", "rimjob", "facial", "creampie", "gangbang", "bukkake",
-    "milf", "cougar", "virgin", "deflower", "missionary", "doggy", "cowgirl",
-    "dong", "schlong", "pecker", "wiener", "johnson", "rod", "meat", "member",
+    "cum",
+    "jizz",
+    "tits",
+    "boobs",
+    "titties",
+    "boobies",
+    "porn",
+    "sex",
+    "orgasm",
+    "masturbate",
+    "anal",
+    "blowjob",
+    "handjob",
+    "69",
+    "dildo",
+    "vibrator",
+    "horny",
+    "slutty",
+    "sexy",
+    "nude",
+    "naked",
+    "semen",
+    "penis",
+    "vagina",
+    "clitoris",
+    "testicles",
+    "balls",
+    "scrotum",
+    "labia",
+    "nipples",
+    "erection",
+    "ejaculate",
+    "aroused",
+    "climax",
+    "foreplay",
+    "intercourse",
+    "penetration",
+    "threesome",
+    "orgy",
+    "bondage",
+    "fetish",
+    "kinky",
+    "bdsm",
+    "dominatrix",
+    "submissive",
+    "spanking",
+    "whip",
+    "latex",
+    "leather",
+    "pegging",
+    "rimjob",
+    "facial",
+    "creampie",
+    "gangbang",
+    "bukkake",
+    "milf",
+    "cougar",
+    "virgin",
+    "deflower",
+    "missionary",
+    "doggy",
+    "cowgirl",
+    "dong",
+    "schlong",
+    "pecker",
+    "wiener",
+    "johnson",
+    "rod",
+    "meat",
+    "member",
     // Drug/substance terms
-    "weed", "pot", "ganja", "420", "blunt", "joint", "bong", "stoner", "pothead"
+    "weed",
+    "pot",
+    "ganja",
+    "420",
+    "blunt",
+    "joint",
+    "bong",
+    "stoner",
+    "pothead",
   ];
   return allowedNSFWWords.some((word) =>
     joinedText.includes(word.toLowerCase())
@@ -264,28 +458,83 @@ router.get("/wins/:userId", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch wins" });
   }
 });
-
-router.get("/new", tokenChecker, async (req, res) => {
+router.get("/new", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
+    // Get all games
+    let allGames = await Game.find();
 
-    // Find games not yet solved by the user
+    if (allGames.length === 0) {
+      return res.status(404).json({ message: "No games available" });
+    }
 
-    const unsolvedGames = await Game.find({
-      _id: { $nin: solvedIds },
-    });
+    // Check if user is adult (18+) and logged in
+    let isAdult = false;
+    let userId = null;
+    const authHeader = req.headers.authorization;
 
-    // If all games are solved, fallback to all games
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        userId = decoded.id;
 
-    let gamesToChooseFrom =
-      unsolvedGames.length > 0 ? unsolvedGames : await Game.find();
+        // Check if user has dateOfBirth and is 18+
+        if (decoded.dateOfBirth) {
+          const today = new Date();
+          const birthDate = new Date(decoded.dateOfBirth);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    // Randomly select a game (or use your own logic to "deprioritize" solved games)
+          // Adjust age if birthday hasn't occurred this year
+          if (
+            monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < birthDate.getDate())
+          ) {
+            age--;
+          }
 
-    const randomIndex = Math.floor(Math.random() * gamesToChooseFrom.length);
-    const selectedGame = gamesToChooseFrom[randomIndex];
-    res.json(selectedGame);
+          isAdult = age >= 18;
+        }
+      } catch (err) {
+        // Invalid token, continue as guest (isAdult = false)
+      }
+    }
+
+    // Filter out NSFW games if user is not adult or not logged in
+    if (!isAdult) {
+      allGames = allGames.filter((game) => !game.tags?.includes("NSFW"));
+
+      if (allGames.length === 0) {
+        return res.status(404).json({ message: "No non-NSFW games available" });
+      }
+    }
+
+    // For logged-in users, try to prioritize unsolved games
+    if (userId) {
+      try {
+        const user = await User.findById(userId);
+        if (user && user.gamesSolved && user.gamesSolved.length > 0) {
+          const solvedIds = user.gamesSolved.map((g) => g.gameId.toString());
+          const unsolvedGames = allGames.filter(
+            (game) => !solvedIds.includes(game._id.toString())
+          );
+
+          // If user has unsolved games, pick from those, otherwise pick from all
+          if (unsolvedGames.length > 0) {
+            const randomIndex = Math.floor(
+              Math.random() * unsolvedGames.length
+            );
+            return res.json(unsolvedGames[randomIndex]);
+          }
+        }
+      } catch (err) {
+        // Error fetching user, continue to default selection
+      }
+    }
+
+    // Default: pick random game from filtered games
+    const randomIndex = Math.floor(Math.random() * allGames.length);
+    res.json(allGames[randomIndex]);
   } catch (error) {
     console.error("Error fetching new game:", error);
     res.status(500).json({ message: "Internal server error" });
