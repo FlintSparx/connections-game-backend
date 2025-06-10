@@ -493,4 +493,19 @@ router.post("/:userId/:gameId", async (req, res) => {
   }
 });
 
+router.get("/username/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).select("username");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ username: user.username });
+  } catch (error) {
+    console.error("Error fetching username:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 export default router;
