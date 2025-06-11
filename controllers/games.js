@@ -501,13 +501,7 @@ router.get("/new", async (req, res) => {
     }
 
     // Filter out NSFW games if user is not adult or not logged in
-    if (!isAdult) {
-      allGames = allGames.filter((game) => !game.tags?.includes("NSFW"));
-
-      if (allGames.length === 0) {
-        return res.status(404).json({ message: "No non-NSFW games available" });
-      }
-    }
+    allGames = allGames.filter((game) => !game.tags?.includes("NSFW"));
 
     // For logged-in users, try to prioritize unsolved games
     if (userId) {
